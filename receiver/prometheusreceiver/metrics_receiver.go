@@ -40,6 +40,7 @@ import (
 	"go.uber.org/zap"
 	"gopkg.in/yaml.v2"
 
+	"github.com/open-telemetry/opentelemetry-collector-contrib/internal/common/logging"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/prometheusreceiver/internal"
 )
 
@@ -82,7 +83,7 @@ func (r *pReceiver) Start(_ context.Context, host component.Host) error {
 	discoveryCtx, cancel := context.WithCancel(context.Background())
 	r.cancelFunc = cancel
 
-	logger := internal.NewZapToGokitLogAdapter(r.settings.Logger)
+	logger := logging.NewZapToGokitLogAdapter(r.settings.Logger)
 
 	// add scrape configs defined by the collector configs
 	baseCfg := r.cfg.PrometheusConfig
