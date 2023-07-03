@@ -184,9 +184,11 @@ func GetAWSConfigSession(logger *zap.Logger, cn ConnAttr, cfg *AWSSessionSetting
 		HTTPClient:             http,
 	}
 	// do not overwrite for sts assume role
+	logger.Info("Creds override with len ", zap.Any("chainChainOverride", override.GetCredentialsChainOverride().GetCredentialsChain()), zap.Any("len", len(override.GetCredentialsChainOverride().GetCredentialsChain())))
 	if cfg.RoleARN == "" && len(override.GetCredentialsChainOverride().GetCredentialsChain()) > 0 {
 		config.Credentials = credentials.NewCredentials(&credentials.ChainProvider{
-			Providers: customCredentialProvider(cfg, config),
+			Providers:     customCredentialProvider(cfg, config),
+			VerboseErrors: true,
 		})
 	}
 	config.CredentialsChainVerboseErrors = aws.Bool(true)
