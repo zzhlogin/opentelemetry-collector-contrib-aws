@@ -6,7 +6,7 @@ require (
 	cloud.google.com/go/compute/metadata v0.2.3
 	github.com/GoogleCloudPlatform/opentelemetry-operations-go/detectors/gcp v1.13.1
 	github.com/amazon-contributing/opentelemetry-collector-contrib/config/confighttp v0.0.0-20230707224110-f341e6f45ea3
-	github.com/aws/aws-sdk-go v1.44.255
+	github.com/aws/aws-sdk-go v1.44.309
 	github.com/aws/aws-sdk-go-v2/config v1.18.25
 	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.13.3
 	github.com/hashicorp/consul/api v1.20.0
@@ -32,6 +32,7 @@ require (
 	github.com/Azure/go-ansiterm v0.0.0-20210617225240-d185dfc1b5a1 // indirect
 	github.com/Microsoft/go-winio v0.5.2 // indirect
 	github.com/Showmax/go-fqdn v1.0.0 // indirect
+	github.com/amazon-contributing/opentelemetry-collector-contrib/override/aws v0.0.0-20230727225902-317222bcea83 // indirect
 	github.com/armon/go-metrics v0.3.10 // indirect
 	github.com/aws/aws-sdk-go-v2 v1.18.0 // indirect
 	github.com/aws/aws-sdk-go-v2/credentials v1.13.24 // indirect

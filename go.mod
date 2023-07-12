@@ -260,7 +260,7 @@ require (
 	github.com/alecthomas/units v0.0.0-20211218093645-b94a6e3cc137 // indirect
 	github.com/aliyun/aliyun-log-go-sdk v0.1.44 // indirect
 	github.com/amazon-contributing/opentelemetry-collector-contrib/config/confighttp v0.0.0-20230707224110-f341e6f45ea3 // indirect
-	github.com/amazon-contributing/opentelemetry-collector-contrib/override/aws v0.0.0-20230630150539-890f186a40da // indirect
+	github.com/amazon-contributing/opentelemetry-collector-contrib/override/aws v0.0.0-20230727225902-317222bcea83 // indirect
 	github.com/andybalholm/brotli v1.0.5 // indirect
 	github.com/antonmedv/expr v1.12.5 // indirect
 	github.com/apache/arrow/go/arrow v0.0.0-20211112161151-bc219186db40 // indirect
@@ -269,7 +269,7 @@ require (
 	github.com/apache/thrift v0.18.1 // indirect
 	github.com/ardielle/ardielle-go v1.5.2 // indirect
 	github.com/armon/go-metrics v0.4.1 // indirect
-	github.com/aws/aws-sdk-go v1.44.293 // indirect
+	github.com/aws/aws-sdk-go v1.44.309 // indirect
 	github.com/aws/aws-sdk-go-v2 v1.18.0 // indirect
 	github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.4.10 // indirect
 	github.com/aws/aws-sdk-go-v2/config v1.18.25 // indirect
@@ -304,7 +304,7 @@ require (
 	github.com/cilium/ebpf v0.8.1 // indirect
 	github.com/cloudfoundry-incubator/uaago v0.0.0-20190307164349-8136b7bbe76e // indirect
 	github.com/cncf/udpa/go v0.0.0-20220112060539-c52dc94e7fbe // indirect
-	github.com/cncf/xds/go v0.0.0-20230607035331-e9ce68804cb4 // indirect
+	github.com/cncf/xds/go v0.0.0-20230112175826-46e39c7b9b43 // indirect
 	github.com/containerd/console v1.0.3 // indirect
 	github.com/containerd/ttrpc v1.1.0 // indirect
 	github.com/coreos/go-oidc v2.2.1+incompatible // indirect
