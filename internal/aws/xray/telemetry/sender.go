@@ -179,7 +179,7 @@ func ToOptions(cfg Config, sess *session.Session, settings *awsutil.AWSSessionSe
 	if !cfg.IncludeMetadata {
 		return nil
 	}
-	metadataClient := ec2metadata.New(sess)
+
 	hostnameProviders := []metadataProvider{
 		simpleMetadataProvider{metadata: cfg.Hostname},
 		envMetadataProvider{envKey: envAWSHostname},
@@ -189,6 +189,7 @@ func ToOptions(cfg Config, sess *session.Session, settings *awsutil.AWSSessionSe
 		envMetadataProvider{envKey: envAWSInstanceID},
 	}
 	if !settings.LocalMode {
+		metadataClient := ec2metadata.New(sess)
 		hostnameProviders = append(hostnameProviders, ec2MetadataProvider{
 			client:      metadataClient,
 			metadataKey: metadataHostname,
