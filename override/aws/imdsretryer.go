@@ -21,6 +21,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/client"
 	"github.com/aws/aws-sdk-go/aws/request"
+	"go.uber.org/zap"
 )
 
 // IMDSRetryer this must implement request.Retryer
@@ -38,17 +39,23 @@ const (
 
 type iMDSRetryer struct {
 	client.DefaultRetryer
+	logger *zap.Logger
 }
 
 // newIMDSRetryer allows us to retry imds errors
 // .5 seconds 1 seconds 2 seconds 4 seconds 8 seconds = 15.5 seconds
 func newIMDSRetryer() iMDSRetryer {
-	return iMDSRetryer{
+	imdsRetryer := iMDSRetryer{
 		DefaultRetryer: client.DefaultRetryer{
 			NumMaxRetries: 5,
 			MinRetryDelay: time.Second / 2,
 		},
 	}
+	logger, err := zap.NewDevelopment()
+	if err == nil {
+		imdsRetryer.logger = logger
+	}
+	return imdsRetryer
 }
 
 func (r iMDSRetryer) ShouldRetry(req *request.Request) bool {
@@ -58,6 +65,9 @@ func (r iMDSRetryer) ShouldRetry(req *request.Request) bool {
 	shouldRetry := false
 	if awsError, ok := req.Error.(awserr.Error); r.DefaultRetryer.ShouldRetry(req) || (ok && awsError != nil && awsError.Code() == "EC2MetadataError") {
 		shouldRetry = true
+	}
+	if r.logger != nil {
+		r.logger.Debug("imds error : ", zap.Bool("shouldRetry", shouldRetry), zap.Error(req.Error))
 	}
 	return shouldRetry
 }
