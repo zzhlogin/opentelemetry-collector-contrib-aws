@@ -76,6 +76,9 @@ func newHTTPClient(logger *zap.Logger, maxIdle int, requestTimeout int, noVerify
 		zap.String("proxyAddr", proxyAddress),
 	)
 	rootCA, err := loadCertPool(certificateFilePath)
+	if certificateFilePath == "" && err != nil {
+		logger.Warn("could not create root ca from", zap.String("file", certificateFilePath), zap.Error(err))
+	}
 	tlsConfig := &tls.Config{
 		RootCAs:            rootCA,
 		InsecureSkipVerify: noVerify,
