@@ -15,7 +15,6 @@
 package awsutil
 
 import (
-	"crypto/x509"
 	"errors"
 	"testing"
 
@@ -169,22 +168,14 @@ func TestGetSTSCreds(t *testing.T) {
 	assert.NotNil(t, err)
 }
 
-func TestLoadCertificateFromFile(t *testing.T) {
-	certFromFile, err := loadCertificateAndKeyFromFile("resources/public_amazon_cert.pem", zap.NewNop())
-	if err != nil {
-		t.Fatalf("failed to parse certificate: " + err.Error())
-	}
-	opts := x509.VerifyOptions{
-		DNSName: "www.amazon.com",
-	}
+func TestLoadAmazonCertificateFromFile(t *testing.T) {
+	certFromFile, err := loadCertPool("resources/public_amazon_cert.pem")
+	assert.Nil(t, err)
+	assert.NotNil(t, certFromFile)
+}
 
-	for _, cert := range certFromFile[0].Certificate {
-		parsedCert, err := x509.ParseCertificate(cert)
-		if err != nil {
-			t.Fatalf("failed to parse certificate: " + err.Error())
-		}
-		if _, err := parsedCert.Verify(opts); err != nil {
-			t.Fatalf("failed to verify certificate: " + err.Error())
-		}
-	}
+func TestLoadEmptyFile(t *testing.T) {
+	certFromFile, err := loadCertPool("")
+	assert.NotNil(t, err)
+	assert.Nil(t, certFromFile)
 }

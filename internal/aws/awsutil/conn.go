@@ -19,9 +19,7 @@ import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
-	"encoding/pem"
 	"errors"
-	"fmt"
 	"net/http"
 	"net/url"
 	"os"
@@ -77,18 +75,10 @@ func newHTTPClient(logger *zap.Logger, maxIdle int, requestTimeout int, noVerify
 	logger.Debug("Using proxy address: ",
 		zap.String("proxyAddr", proxyAddress),
 	)
-	certificateList, err := loadCertificateAndKeyFromFile(certificateFilePath, logger)
-	var tlsConfig *tls.Config
-	if err != nil {
-		logger.Debug("could not get cert from file", zap.Error(err))
-		tlsConfig = &tls.Config{
-			InsecureSkipVerify: noVerify,
-		}
-	} else {
-		tlsConfig = &tls.Config{
-			Certificates:       certificateList,
-			InsecureSkipVerify: noVerify,
-		}
+	rootCA, err := loadCertPool(certificateFilePath)
+	tlsConfig := &tls.Config{
+		RootCAs:            rootCA,
+		InsecureSkipVerify: noVerify,
 	}
 
 	finalProxyAddress := getProxyAddress(proxyAddress)
@@ -117,37 +107,18 @@ func newHTTPClient(logger *zap.Logger, maxIdle int, requestTimeout int, noVerify
 	return http, err
 }
 
-func loadCertificateAndKeyFromFile(path string, logger *zap.Logger) ([]tls.Certificate, error) {
-	raw, err := os.ReadFile(path)
+func loadCertPool(bundleFile string) (*x509.CertPool, error) {
+	bundleBytes, err := os.ReadFile(bundleFile)
 	if err != nil {
 		return nil, err
 	}
 
-	cert := make([]tls.Certificate, 0)
-	for {
-		block, rest := pem.Decode(raw)
-		if block == nil {
-			break
-		}
-
-		certificate, err := x509.ParseCertificate(block.Bytes)
-		if err != nil {
-			continue
-		}
-
-		cert = append(cert, tls.Certificate{
-			Certificate: [][]byte{block.Bytes},
-			Leaf:        certificate,
-		})
-		logger.Debug("cert added", zap.Any("dns", certificate.DNSNames))
-		raw = rest
+	p := x509.NewCertPool()
+	if !p.AppendCertsFromPEM(bundleBytes) {
+		return nil, err
 	}
 
-	if len(cert) == 0 {
-		return nil, fmt.Errorf("no certificate found in \"%s\"", path)
-	}
-
-	return cert, nil
+	return p, nil
 }
 
 func getProxyAddress(proxyAddress string) string {
