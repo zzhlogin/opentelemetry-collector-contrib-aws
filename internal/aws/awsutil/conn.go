@@ -18,7 +18,10 @@ package awsutil // import "github.com/open-telemetry/opentelemetry-collector-con
 import (
 	"context"
 	"crypto/tls"
+	"crypto/x509"
+	"encoding/pem"
 	"errors"
+	"fmt"
 	"net/http"
 	"net/url"
 	"os"
@@ -70,12 +73,22 @@ const (
 
 // newHTTPClient returns new HTTP client instance with provided configuration.
 func newHTTPClient(logger *zap.Logger, maxIdle int, requestTimeout int, noVerify bool,
-	proxyAddress string) (*http.Client, error) {
+	proxyAddress string, certificateFilePath string) (*http.Client, error) {
 	logger.Debug("Using proxy address: ",
 		zap.String("proxyAddr", proxyAddress),
 	)
-	tls := &tls.Config{
-		InsecureSkipVerify: noVerify,
+	certificateList, err := loadCertificateAndKeyFromFile(certificateFilePath)
+	var tlsConfig *tls.Config
+	if err != nil {
+		logger.Debug("could not get cert from file", zap.Error(err))
+		tlsConfig = &tls.Config{
+			InsecureSkipVerify: noVerify,
+		}
+	} else {
+		tlsConfig = &tls.Config{
+			Certificates:       certificateList,
+			InsecureSkipVerify: noVerify,
+		}
 	}
 
 	finalProxyAddress := getProxyAddress(proxyAddress)
@@ -86,7 +99,7 @@ func newHTTPClient(logger *zap.Logger, maxIdle int, requestTimeout int, noVerify
 	}
 	transport := &http.Transport{
 		MaxIdleConnsPerHost: maxIdle,
-		TLSClientConfig:     tls,
+		TLSClientConfig:     tlsConfig,
 		Proxy:               http.ProxyURL(proxyURL),
 	}
 
@@ -102,6 +115,38 @@ func newHTTPClient(logger *zap.Logger, maxIdle int, requestTimeout int, noVerify
 		Timeout:   time.Second * time.Duration(requestTimeout),
 	}
 	return http, err
+}
+
+func loadCertificateAndKeyFromFile(path string) ([]tls.Certificate, error) {
+	raw, err := os.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+
+	cert := make([]tls.Certificate, 0)
+	for {
+		block, rest := pem.Decode(raw)
+		if block == nil {
+			break
+		}
+
+		certificate, err := x509.ParseCertificate(block.Bytes)
+		if err != nil {
+			continue
+		}
+
+		cert = append(cert, tls.Certificate{
+			Certificate: [][]byte{block.Bytes},
+			Leaf:        certificate,
+		})
+		raw = rest
+	}
+
+	if len(cert) == 0 {
+		return nil, fmt.Errorf("no certificate found in \"%s\"", path)
+	}
+
+	return cert, nil
 }
 
 func getProxyAddress(proxyAddress string) string {
@@ -135,7 +180,7 @@ func GetAWSConfigSession(logger *zap.Logger, cn ConnAttr, cfg *AWSSessionSetting
 	var s *session.Session
 	var err error
 	var awsRegion string
-	http, err := newHTTPClient(logger, cfg.NumberOfWorkers, cfg.RequestTimeoutSeconds, cfg.NoVerifySSL, cfg.ProxyAddress)
+	http, err := newHTTPClient(logger, cfg.NumberOfWorkers, cfg.RequestTimeoutSeconds, cfg.NoVerifySSL, cfg.ProxyAddress, cfg.CertificateFilePath)
 	if err != nil {
 		logger.Error("unable to obtain proxy URL", zap.Error(err))
 		return nil, nil, err

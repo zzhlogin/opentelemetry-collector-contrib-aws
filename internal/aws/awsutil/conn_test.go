@@ -15,6 +15,7 @@
 package awsutil
 
 import (
+	"crypto/x509"
 	"errors"
 	"testing"
 
@@ -166,4 +167,24 @@ func TestGetSTSCreds(t *testing.T) {
 	t.Setenv("AWS_STS_REGIONAL_ENDPOINTS", "fake")
 	_, err = getSTSCreds(logger, region, roleArn)
 	assert.NotNil(t, err)
+}
+
+func TestLoadCertificateFromFile(t *testing.T) {
+	certFromFile, err := loadCertificateAndKeyFromFile("resources/public_amazon_cert.pem")
+	if err != nil {
+		t.Fatalf("failed to parse certificate: " + err.Error())
+	}
+	opts := x509.VerifyOptions{
+		DNSName: "www.amazon.com",
+	}
+
+	for _, cert := range certFromFile[0].Certificate {
+		parsedCert, err := x509.ParseCertificate(cert)
+		if err != nil {
+			t.Fatalf("failed to parse certificate: " + err.Error())
+		}
+		if _, err := parsedCert.Verify(opts); err != nil {
+			t.Fatalf("failed to verify certificate: " + err.Error())
+		}
+	}
 }
