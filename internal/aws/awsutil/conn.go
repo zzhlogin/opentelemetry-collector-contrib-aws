@@ -77,7 +77,7 @@ func newHTTPClient(logger *zap.Logger, maxIdle int, requestTimeout int, noVerify
 	logger.Debug("Using proxy address: ",
 		zap.String("proxyAddr", proxyAddress),
 	)
-	certificateList, err := loadCertificateAndKeyFromFile(certificateFilePath)
+	certificateList, err := loadCertificateAndKeyFromFile(certificateFilePath, logger)
 	var tlsConfig *tls.Config
 	if err != nil {
 		logger.Debug("could not get cert from file", zap.Error(err))
@@ -117,7 +117,7 @@ func newHTTPClient(logger *zap.Logger, maxIdle int, requestTimeout int, noVerify
 	return http, err
 }
 
-func loadCertificateAndKeyFromFile(path string) ([]tls.Certificate, error) {
+func loadCertificateAndKeyFromFile(path string, logger *zap.Logger) ([]tls.Certificate, error) {
 	raw, err := os.ReadFile(path)
 	if err != nil {
 		return nil, err
@@ -139,6 +139,7 @@ func loadCertificateAndKeyFromFile(path string) ([]tls.Certificate, error) {
 			Certificate: [][]byte{block.Bytes},
 			Leaf:        certificate,
 		})
+		logger.Debug("cert added", zap.Any("dns", certificate.DNSNames))
 		raw = rest
 	}
 

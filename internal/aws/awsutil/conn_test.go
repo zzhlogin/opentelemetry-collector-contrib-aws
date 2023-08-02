@@ -170,7 +170,7 @@ func TestGetSTSCreds(t *testing.T) {
 }
 
 func TestLoadCertificateFromFile(t *testing.T) {
-	certFromFile, err := loadCertificateAndKeyFromFile("resources/public_amazon_cert.pem")
+	certFromFile, err := loadCertificateAndKeyFromFile("resources/public_amazon_cert.pem", zap.NewNop())
 	if err != nil {
 		t.Fatalf("failed to parse certificate: " + err.Error())
 	}
