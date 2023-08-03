@@ -205,6 +205,12 @@ func logsToCWLogs(logger *zap.Logger, ld plog.Logs, config *Config) ([]*cwlogs.E
 					logger.Debug("Failed to convert to CloudWatch Log", zap.Error(err), zap.String("log", log.Body().AsString()))
 					dropped++
 				} else {
+					logger.Debug("Converted to CloudWatch Log",
+						zap.String("orig", log.Body().AsString()),
+						zap.String("group", event.LogGroupName),
+						zap.String("stream", event.LogStreamName),
+						zap.String("message", *event.InputLogEvent.Message),
+					)
 					out = append(out, event)
 				}
 			}
