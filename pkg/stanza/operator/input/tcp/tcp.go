@@ -286,6 +286,7 @@ func (t *Input) goHandleMessages(ctx context.Context, conn net.Conn, cancel cont
 				}
 			}
 
+			t.Debugf("write entry body from tcp %v", entry.Body)
 			t.Write(ctx, entry)
 		}
 		if err := scanner.Err(); err != nil {
