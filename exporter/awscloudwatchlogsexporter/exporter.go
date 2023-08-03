@@ -19,6 +19,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"sync"
 	"time"
 
@@ -202,11 +203,10 @@ func logsToCWLogs(logger *zap.Logger, ld plog.Logs, config *Config) ([]*cwlogs.E
 				log := logs.At(k)
 				event, err := logToCWLog(resourceAttrs, log, config)
 				if err != nil {
-					logger.Debug("Failed to convert to CloudWatch Log", zap.Error(err), zap.String("log", log.Body().AsString()))
+					logger.Error(fmt.Sprintf("Failed to convert to CloudWatch Log: %s", log.Body().AsString()), zap.Error(err))
 					dropped++
 				} else {
-					logger.Debug("Converted to CloudWatch Log",
-						zap.String("orig", log.Body().AsString()),
+					logger.Debug(fmt.Sprintf("Converted to CloudWatch Log: %s", log.Body().AsString()),
 						zap.String("group", event.LogGroupName),
 						zap.String("stream", event.LogStreamName),
 						zap.String("message", *event.InputLogEvent.Message),
