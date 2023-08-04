@@ -153,7 +153,7 @@ func (c *Converter) workerLoop() {
 				} else {
 					sl = pLogs.ResourceLogs().At(resourceIdx).ScopeLogs().At(0)
 				}
-				convertInto(e, sl.LogRecords().AppendEmpty())
+				c.convertInto(e, sl.LogRecords().AppendEmpty())
 			}
 
 			// Send plogs directly to flushChan
@@ -214,14 +214,14 @@ func (c *Converter) Batch(e []*entry.Entry) error {
 }
 
 // convert converts one entry.Entry into plog.LogRecord allocating it.
-func convert(ent *entry.Entry) plog.LogRecord {
+func (c *Converter) convert(ent *entry.Entry) plog.LogRecord {
 	dest := plog.NewLogRecord()
-	convertInto(ent, dest)
+	c.convertInto(ent, dest)
 	return dest
 }
 
 // convertInto converts entry.Entry into provided plog.LogRecord.
-func convertInto(ent *entry.Entry, dest plog.LogRecord) {
+func (c *Converter) convertInto(ent *entry.Entry, dest plog.LogRecord) {
 	if !ent.Timestamp.IsZero() {
 		dest.SetTimestamp(pcommon.NewTimestampFromTime(ent.Timestamp))
 	}
@@ -234,7 +234,9 @@ func convertInto(ent *entry.Entry, dest plog.LogRecord) {
 	}
 
 	upsertToMap(ent.Attributes, dest.Attributes())
+	c.logger.Debug(fmt.Sprintf("converter received message: %s", ent.Body))
 	upsertToAttributeVal(ent.Body, dest.Body())
+	c.logger.Debug(fmt.Sprintf("converter stored message: %s", dest.Body().AsString()))
 
 	if ent.TraceID != nil {
 		var buffer [16]byte

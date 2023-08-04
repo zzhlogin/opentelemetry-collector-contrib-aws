@@ -263,7 +263,7 @@ func (t *Input) goHandleMessages(ctx context.Context, conn net.Conn, cancel cont
 				continue
 			}
 
-			t.Debugf("received message: %s", string(decoded))
+			t.Debugf("tcp scan received message: %s", string(decoded))
 			entry, err := t.NewEntry(string(decoded))
 			if err != nil {
 				t.Errorw("Failed to create entry", zap.Error(err))
