@@ -236,7 +236,6 @@ func (c *Converter) convertInto(ent *entry.Entry, dest plog.LogRecord) {
 	upsertToMap(ent.Attributes, dest.Attributes())
 	c.logger.Debug(fmt.Sprintf("converter received message: %s", ent.Body))
 	upsertToAttributeVal(ent.Body, dest.Body())
-	c.logger.Debug(fmt.Sprintf("converter stored message: %s", dest.Body().AsString()))
 
 	if ent.TraceID != nil {
 		var buffer [16]byte

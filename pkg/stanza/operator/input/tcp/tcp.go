@@ -253,7 +253,6 @@ func (t *Input) goHandleMessages(ctx context.Context, conn net.Conn, cancel cont
 		buf := make([]byte, 0, t.MaxLogSize)
 		scanner := bufio.NewScanner(conn)
 		scanner.Buffer(buf, t.MaxLogSize)
-
 		scanner.Split(t.splitFunc)
 
 		for scanner.Scan() {
@@ -269,6 +268,7 @@ func (t *Input) goHandleMessages(ctx context.Context, conn net.Conn, cancel cont
 				t.Errorw("Failed to create entry", zap.Error(err))
 				continue
 			}
+			t.Debugf("tcp scan created entry: %s", entry.Body)
 
 			if t.addAttributes {
 				entry.AddAttribute("net.transport", "IP.TCP")

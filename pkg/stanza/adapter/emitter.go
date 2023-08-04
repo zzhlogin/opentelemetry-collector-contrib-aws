@@ -91,8 +91,8 @@ func (e *LogEmitter) OutChannel() <-chan []*entry.Entry {
 
 // Process will emit an entry to the output channel
 func (e *LogEmitter) Process(ctx context.Context, ent *entry.Entry) error {
+	e.Logger().Debugf("log emitter received message: %v", ent.Body)
 	if oldBatch := e.appendEntry(ent); len(oldBatch) > 0 {
-		e.Logger().Debugf("log emitter received message: %v", ent.Body)
 		e.flush(ctx, oldBatch)
 	}
 
