@@ -11,7 +11,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.13.3
 	github.com/hashicorp/consul/api v1.20.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/internal/aws/ecsutil v0.77.0
-	github.com/open-telemetry/opentelemetry-collector-contrib/internal/metadataproviders v0.79.0
+	github.com/open-telemetry/opentelemetry-collector-contrib/internal/metadataproviders v0.77.0
 	github.com/stretchr/testify v1.8.4
 	go.opentelemetry.io/collector/component v0.81.0
 	go.opentelemetry.io/collector/config/configopaque v0.81.0
