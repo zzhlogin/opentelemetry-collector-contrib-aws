@@ -24,6 +24,7 @@ import (
 	"go.opentelemetry.io/collector/pdata/pmetric"
 	"go.opentelemetry.io/collector/receiver"
 	"go.uber.org/zap"
+	"k8s.io/client-go/rest"
 
 	ci "github.com/open-telemetry/opentelemetry-collector-contrib/internal/aws/containerinsight"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/internal/aws/k8s/k8sclient"
@@ -78,7 +79,7 @@ func (acir *awsContainerInsightReceiver) Start(ctx context.Context, host compone
 	}
 
 	if acir.config.ContainerOrchestrator == ci.EKS {
-		k8sDecorator, err := stores.NewK8sDecorator(ctx, acir.config.TagService, acir.config.PrefFullPodName, acir.config.AddFullPodNameMetricLabel, acir.config.AddContainerNameMetricLabel, acir.settings.Logger)
+		k8sDecorator, err := stores.NewK8sDecorator(ctx, acir.config.TagService, acir.config.PrefFullPodName, acir.config.AddFullPodNameMetricLabel, acir.config.AddContainerNameMetricLabel, acir.config.EnableControlPlaneMetrics, acir.settings.Logger)
 		if err != nil {
 			return err
 		}
@@ -156,7 +157,26 @@ func (acir *awsContainerInsightReceiver) startPrometheusScraper(ctx context.Cont
 
 	acir.settings.Logger.Debug("kube apiserver endpoint found", zap.String("endpoint", endpoint))
 	// use the same leader
-	acir.prometheusScraper, err = k8sapiserver.NewPrometheusScraper(ctx, acir.settings, endpoint, acir.nextConsumer, host, hostinfo, leaderElection)
+
+	restConfig, err := rest.InClusterConfig()
+	if err != nil {
+		return err
+	}
+	bearerToken := restConfig.BearerToken
+	if bearerToken == "" {
+		return errors.New("bearer token was empty")
+	}
+
+	acir.prometheusScraper, err = k8sapiserver.NewPrometheusScraper(k8sapiserver.PrometheusScraperOpts{
+		Ctx:                 ctx,
+		TelemetrySettings:   acir.settings,
+		Endpoint:            endpoint,
+		Consumer:            acir.nextConsumer,
+		Host:                host,
+		ClusterNameProvider: hostinfo,
+		LeaderElection:      leaderElection,
+		BearerToken:         bearerToken,
+	})
 	return err
 }
 

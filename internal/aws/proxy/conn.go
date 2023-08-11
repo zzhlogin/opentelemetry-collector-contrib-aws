@@ -26,15 +26,13 @@ import (
 	"strings"
 	"time"
 
-	awsSDKV2 "github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/aws/retry"
-	awsConfig "github.com/aws/aws-sdk-go-v2/config"
-	"github.com/aws/aws-sdk-go-v2/feature/ec2/imds"
+	override "github.com/amazon-contributing/opentelemetry-collector-contrib/override/aws"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/arn"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/credentials/stscreds"
+	"github.com/aws/aws-sdk-go/aws/ec2metadata"
 	"github.com/aws/aws-sdk-go/aws/endpoints"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/sts"
@@ -82,16 +80,19 @@ var newAWSSession = func(roleArn string, region string, log *zap.Logger) (*sessi
 	return sess, nil
 }
 
-var getEC2Region = func(cfg awsSDKV2.Config) (string, error) {
-	clientIMDSV2Only, clientIMDSV1Fallback := CreateIMDSV2AndFallbackClient(cfg)
-	region, err := clientIMDSV2Only.GetRegion(context.Background(), &imds.GetRegionInput{})
-	if err != nil {
-		region, err = clientIMDSV1Fallback.GetRegion(context.Background(), &imds.GetRegionInput{})
-		if err != nil {
-			return "", err
-		}
+var getEC2Region = func(s *session.Session) (string, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), override.TimePerCall)
+	defer cancel()
+	region, err := ec2metadata.New(s, &aws.Config{
+		Retryer:                   override.IMDSRetryer,
+		EC2MetadataEnableFallback: aws.Bool(false),
+	}).RegionWithContext(ctx)
+	if err == nil {
+		return region, err
 	}
-	return region.Region, nil
+	ctxFallbackEnable, cancelFallbackEnable := context.WithTimeout(context.Background(), override.TimePerCall)
+	defer cancelFallbackEnable()
+	return ec2metadata.New(s, &aws.Config{}).RegionWithContext(ctxFallbackEnable)
 }
 
 func getAWSConfigSession(c *Config, logger *zap.Logger) (*aws.Config, *session.Session, error) {
@@ -115,19 +116,15 @@ func getAWSConfigSession(c *Config, logger *zap.Logger) (*aws.Config, *session.S
 		awsRegion, err = getRegionFromECSMetadata()
 		if err != nil {
 			logger.Debug("Unable to fetch region from ECS metadata", zap.Error(err))
-			config, innerError := awsConfig.LoadDefaultConfig(context.Background())
-			config.Retryer = func() awsSDKV2.Retryer {
-				return retry.NewStandard(func(options *retry.StandardOptions) {})
-			}
-			if innerError == nil {
-				awsRegion, err = getEC2Region(config)
+			var sess *session.Session
+			sess, err = session.NewSession()
+			if err == nil {
+				awsRegion, err = getEC2Region(sess)
 				if err != nil {
 					logger.Debug("Unable to fetch region from EC2 metadata", zap.Error(err))
 				} else {
 					logger.Debug("Fetched region from EC2 metadata", zap.String("region", awsRegion))
 				}
-			} else {
-				err = innerError
 			}
 		} else {
 			logger.Debug("Fetched region from ECS metadata file", zap.String("region", awsRegion))
@@ -305,16 +302,4 @@ func getSTSRegionalEndpoint(r string) string {
 func getPartition(region string) string {
 	p, _ := endpoints.PartitionForRegion(endpoints.DefaultPartitions(), region)
 	return p.ID()
-}
-
-func CreateIMDSV2AndFallbackClient(cfg awsSDKV2.Config) (*imds.Client, *imds.Client) {
-	optionsIMDSV2Only := func(o *imds.Options) {
-		o.EnableFallback = awsSDKV2.FalseTernary
-	}
-	optionsIMDSV1Fallback := func(o *imds.Options) {
-		o.EnableFallback = awsSDKV2.TrueTernary
-	}
-	clientIMDSV2Only := imds.NewFromConfig(cfg, optionsIMDSV2Only)
-	clientIMDSV1Fallback := imds.NewFromConfig(cfg, optionsIMDSV1Fallback)
-	return clientIMDSV2Only, clientIMDSV1Fallback
 }

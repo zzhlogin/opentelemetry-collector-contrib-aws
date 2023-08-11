@@ -97,7 +97,7 @@ rules:
     resources: ["pods", "nodes", "endpoints"]
     verbs: ["list", "watch"]
   - apiGroups: ["apps"]
-    resources: ["replicasets"]
+    resources: ["replicasets", "daemonsets", "deployments", "statefulsets"]
     verbs: ["list", "watch"]
   - apiGroups: ["batch"]
     resources: ["jobs"]
@@ -340,17 +340,18 @@ kubectl apply -f config.yaml
 
 ## Available Metrics and Resource Attributes
 ### Cluster
-| Metric                                                     | Unit    |
-|------------------------------------------------------------|---------|
-| cluster_failed_node_count                                  | Count   |
-| cluster_node_count                                         | Count   |
-| apiserver_storage_objects                                  | Count   |
-| apiserver_request_total                                    | Count   |
-| apiserver_request_duration_seconds                         | Seconds |
-| apiserver_admission_controller_admission_duration_seconds  | Seconds |
-| rest_client_request_duration_seconds                       | Seconds |
-| rest_client_requests_total                                 | Count   |
-| etcd_request_duration_seconds                              | Seconds |
+| Metric                                                    | Unit    |
+|-----------------------------------------------------------|---------|
+| cluster_failed_node_count                                 | Count   |
+| cluster_node_count                                        | Count   |
+| cluster_number_of_running_pods                            | Count   |
+| apiserver_storage_objects                                 | Count   |
+| apiserver_request_total                                   | Count   |
+| apiserver_request_duration_seconds                        | Seconds |
+| apiserver_admission_controller_admission_duration_seconds | Seconds |
+| rest_client_request_duration_seconds                      | Seconds |
+| rest_client_requests_total                                | Count   |
+| etcd_request_duration_seconds                             | Seconds |
 
 
 
@@ -429,12 +430,12 @@ kubectl apply -f config.yaml
 <br/><br/> 
 
 ### Cluster Deployment
-| Metric                                 | Unit  |
-|----------------------------------------|-------|
-| deployment_spec_replicas               | Count |
-| deployment_status_replicas             | Count |
-| deployment_status_replicas_available   | Count |
-| deployment_status_replicas_unavailable | Count |
+| Metric                      | Unit  |
+|-----------------------------|-------|
+| replicas_desired            | Count |
+| replicas_ready              | Count |
+| status_replicas_available   | Count |
+| status_replicas_unavailable | Count |
 
 
 <br/><br/>
@@ -454,13 +455,58 @@ kubectl apply -f config.yaml
 <br/><br/>
 <br/><br/>
 
+### Cluster ReplicaSet
+| Metric                    | Unit  |
+|---------------------------|-------|
+| replicas_desired          | Count |
+| replicas_ready            | Count |
+| status_replicas_available | Count |
+
+<br/><br/>
+| Resource Attribute |
+|--------------------|
+| ClusterName        |
+| NodeName           |
+| Namespace          |
+| PodName            |
+| Type               |
+| Timestamp          |
+| Version            |
+| Sources            |
+| kubernetes         |
+
+<br/><br/>
+### Cluster StatefulSet
+| Metric                      | Unit  |
+|-----------------------------|-------|
+| replicas_desired            | Count |
+| replicas_ready              | Count |
+| status_replicas_available   | Count |
+
+
+<br/><br/>
+| Resource Attribute |
+|--------------------|
+| ClusterName        |
+| NodeName           |
+| Namespace          |
+| PodName            |
+| Type               |
+| Timestamp          |
+| Version            |
+| Sources            |
+| kubernetes         |
+
+
+<br/><br/>
+
 ### Cluster DaemonSet
-| Metric                                    | Unit  |
-|-------------------------------------------|-------|
-| daemonset_status_number_available         | Count |
-| daemonset_status_number_unavailable       | Count |
-| daemonset_status_desired_number_scheduled | Count |
-| daemonset_status_current_number_scheduled | Count |
+| Metric                    | Unit  |
+|---------------------------|-------|
+| replicas_desired          | Count |
+| replicas_ready            | Count |
+| status_number_available   | Count |
+| status_number_unavailable | Count |
 
 
 <br/><br/>
@@ -522,6 +568,7 @@ kubectl apply -f config.yaml
 | node_status_condition_memory_pressure     | Count        |
 | node_status_condition_disk_pressure       | Count        |
 | node_status_condition_network_unavailable | Count        |
+| node_status_condition_unknown             | Count        |
 | node_status_capacity_pods                 | Count        |
 | node_status_allocatable_pods              | Count        |
 
@@ -632,45 +679,48 @@ kubectl apply -f config.yaml
 <br/><br/> 
 
 ### Pod
-| Metric                                | Unit          |
-|---------------------------------------|---------------|
-| pod_cpu_limit                         | Millicore     |
-| pod_cpu_request                       | Millicore     |
-| pod_cpu_reserved_capacity             | Percent       |
-| pod_cpu_usage_system                  | Millicore     |
-| pod_cpu_usage_total                   | Millicore     |
-| pod_cpu_usage_user                    | Millicore     |
-| pod_cpu_utilization                   | Percent       |
-| pod_cpu_utilization_over_pod_limit    | Percent       |
-| pod_memory_cache                      | Bytes         |
-| pod_memory_failcnt                    | Count         |
-| pod_memory_hierarchical_pgfault       | Count/Second  |
-| pod_memory_hierarchical_pgmajfault    | Count/Second  |
-| pod_memory_limit                      | Bytes         |
-| pod_memory_mapped_file                | Bytes         |
-| pod_memory_max_usage                  | Bytes         |
-| pod_memory_pgfault                    | Count/Second  |
-| pod_memory_pgmajfault                 | Count/Second  |
-| pod_memory_request                    | Bytes         |
-| pod_memory_reserved_capacity          | Percent       |
-| pod_memory_rss                        | Bytes         |
-| pod_memory_swap                       | Bytes         |
-| pod_memory_usage                      | Bytes         |
-| pod_memory_utilization                | Percent       |
-| pod_memory_utilization_over_pod_limit | Percent       |
-| pod_memory_working_set                | Bytes         |
-| pod_network_rx_bytes                  | Bytes/Second  |
-| pod_network_rx_dropped                | Count/Second  |
-| pod_network_rx_errors                 | Count/Second  |
-| pod_network_rx_packets                | Count/Second  |
-| pod_network_total_bytes               | Bytes/Second  |
-| pod_network_tx_bytes                  | Bytes/Second  |
-| pod_network_tx_dropped                | Count/Second  |
-| pod_network_tx_errors                 | Count/Second  |
-| pod_network_tx_packets                | Count/Second  |
-| pod_number_of_container_restarts      | Count         | 
-| pod_number_of_containers              | Count         |   
-| pod_number_of_running_containers      | Count         |  
+| Metric                                | Unit         |
+|---------------------------------------|--------------|
+| pod_cpu_limit                         | Millicore    |
+| pod_cpu_request                       | Millicore    |
+| pod_cpu_reserved_capacity             | Percent      |
+| pod_cpu_usage_system                  | Millicore    |
+| pod_cpu_usage_total                   | Millicore    |
+| pod_cpu_usage_user                    | Millicore    |
+| pod_cpu_utilization                   | Percent      |
+| pod_cpu_utilization_over_pod_limit    | Percent      |
+| pod_memory_cache                      | Bytes        |
+| pod_memory_failcnt                    | Count        |
+| pod_memory_hierarchical_pgfault       | Count/Second |
+| pod_memory_hierarchical_pgmajfault    | Count/Second |
+| pod_memory_limit                      | Bytes        |
+| pod_memory_mapped_file                | Bytes        |
+| pod_memory_max_usage                  | Bytes        |
+| pod_memory_pgfault                    | Count/Second |
+| pod_memory_pgmajfault                 | Count/Second |
+| pod_memory_request                    | Bytes        |
+| pod_memory_reserved_capacity          | Percent      |
+| pod_memory_rss                        | Bytes        |
+| pod_memory_swap                       | Bytes        |
+| pod_memory_usage                      | Bytes        |
+| pod_memory_utilization                | Percent      |
+| pod_memory_utilization_over_pod_limit | Percent      |
+| pod_memory_working_set                | Bytes        |
+| pod_network_rx_bytes                  | Bytes/Second |
+| pod_network_rx_dropped                | Count/Second |
+| pod_network_rx_errors                 | Count/Second |
+| pod_network_rx_packets                | Count/Second |
+| pod_network_total_bytes               | Bytes/Second |
+| pod_network_tx_bytes                  | Bytes/Second |
+| pod_network_tx_dropped                | Count/Second |
+| pod_network_tx_errors                 | Count/Second |
+| pod_network_tx_packets                | Count/Second |
+| pod_number_of_container_restarts      | Count        | 
+| pod_number_of_containers              | Count        |   
+| pod_number_of_running_containers      | Count        |  
+| pod_status_ready                      | Count        |
+| pod_status_scheduled                  | Count        |
+| pod_status_unknown                    | Count        |
 
 | Resource Attribute   |
 |----------------------|
