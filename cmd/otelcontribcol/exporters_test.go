@@ -497,7 +497,6 @@ func TestDefaultExporters(t *testing.T) {
 		expectedExporters[k] = struct{}{}
 	}
 	for _, tt := range tests {
-		override.IMDSRetryer = nil
 		_, ok := expFactories[tt.exporter]
 		if !ok {
 			// not part of the distro, skipping.

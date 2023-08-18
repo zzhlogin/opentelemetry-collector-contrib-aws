@@ -11,7 +11,7 @@ require (
 	github.com/docker/docker v23.0.5+incompatible
 	github.com/hashicorp/consul/api v1.20.0
 	github.com/panta/machineid v1.0.2
-	github.com/stretchr/testify v1.8.2
+	github.com/stretchr/testify v1.8.4
 )
 
 require (

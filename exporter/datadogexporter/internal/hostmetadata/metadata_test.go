@@ -65,7 +65,6 @@ var (
 )
 
 func TestFillHostMetadata(t *testing.T) {
-	override.IMDSRetryer = nil
 	params := exportertest.NewNopCreateSettings()
 	params.BuildInfo = mockBuildInfo
 
