@@ -7,6 +7,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 	"strings"
 	"sync"
 
@@ -79,6 +80,7 @@ func newEmfExporter(config *Config, set exporter.CreateSettings) (*emfExporter, 
 }
 
 func (emf *emfExporter) pushMetricsData(_ context.Context, md pmetric.Metrics) error {
+	log.Printf("inside the pushMetricsData")
 	rms := md.ResourceMetrics()
 	labels := map[string]string{}
 	for i := 0; i < rms.Len(); i++ {
