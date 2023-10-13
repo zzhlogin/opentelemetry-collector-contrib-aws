@@ -224,3 +224,19 @@ func wrapErrorIfBadRequest(err error) error {
 	}
 	return err
 }
+
+func isEnhancedContainerInsights(config *Config) bool {
+	return config.EnhancedContainerInsights && !config.DisableMetricExtraction
+}
+
+func isPulseApmEnabled(config *Config) bool {
+	if config.LogGroupName == "" || config.Namespace == "" {
+		return false
+	}
+
+	if config.Namespace == pulseMetricNamespace && strings.HasPrefix(config.LogGroupName, pulseLogGroupNamePrefix) {
+		return true
+	}
+
+	return false
+}
