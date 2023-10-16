@@ -17,6 +17,7 @@ template_yaml: .chloggen/TEMPLATE.yaml
 change_logs:
   user: CHANGELOG.md
   api: CHANGELOG-API.md
+  change_aws: CHANGELOG-AWS.md
 
 # The default change_log or change_logs to which an entry should be added.
 # If 'change_logs' is specified in this file, and no value is specified for 'default_change_logs',
