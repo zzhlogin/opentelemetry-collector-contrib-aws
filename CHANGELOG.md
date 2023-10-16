@@ -1,11 +1,5 @@
 # Changelog
 
-All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
-
-### [0.74.5](https://github.com/amazon-contributing/opentelemetry-collector-contrib/compare/v0.74.4...v0.74.5) (2023-10-16)
-
-# Changelog
-
 Starting with version v0.83.0, this changelog includes only user-facing changes.
 If you are looking for developer-facing changes, check out [CHANGELOG-API.md](./CHANGELOG-API.md).
 
