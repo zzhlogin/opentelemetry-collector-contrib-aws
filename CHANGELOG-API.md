@@ -6,9 +6,6 @@ This changelog includes only developer-facing changes.
 If you are looking for user-facing changes, check out [CHANGELOG.md](./CHANGELOG.md).
 
 <!-- next version -->
-## v0.84.1
-
-## testing
 
 ## v0.84.0
 
