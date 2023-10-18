@@ -276,6 +276,10 @@ FILENAME?=$(shell git branch --show-current)
 chlog-new: $(CHLOGGEN)
 	$(CHLOGGEN) new --config $(CHLOGGEN_CONFIG) --filename $(FILENAME)
 
+.PHONY: chlog-new-aws
+chlog-new-aws: $(CHLOGGEN)
+	$(CHLOGGEN) new --config .chloggen-aws/config.yaml --filename $(FILENAME)
+
 .PHONY: chlog-validate
 chlog-validate: $(CHLOGGEN)
 	$(CHLOGGEN) validate --config $(CHLOGGEN_CONFIG)
@@ -283,6 +287,14 @@ chlog-validate: $(CHLOGGEN)
 .PHONY: chlog-preview
 chlog-preview: $(CHLOGGEN)
 	$(CHLOGGEN) update --config $(CHLOGGEN_CONFIG) --dry
+
+.PHONY: chlog-aws
+chlog-aws:
+	go run ./loggen-aws/main.go
+
+.PHONY: chlog-update-aws
+chlog-update-aws: $(CHLOGGEN)
+	$(CHLOGGEN) update --config .chloggen-aws/config.yaml --version $(VERSION)
 
 .PHONY: chlog-update
 chlog-update: $(CHLOGGEN)
@@ -435,3 +447,4 @@ generate-gh-issue-templates:
 	 	FILE="$${TMP_FILE}" ./.github/workflows/scripts/add-component-options.sh > "$${YAML_FILE}"; \
 		rm "$${TMP_FILE}"; \
 	done
+

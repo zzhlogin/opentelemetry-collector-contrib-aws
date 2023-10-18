@@ -74,7 +74,7 @@ jobs:
             echo "A changelog entry was added to the ./.chloggen/ directory."
           fi
 
-      - name: Validate ./.chloggen/*.yaml changes
+      - name: Validate ./.chloggen/changelog-aws.yaml changes
         run: |
           make chlog-validate \
             || { echo "New ./.chloggen/*.yaml file failed validation."; exit 1; }
