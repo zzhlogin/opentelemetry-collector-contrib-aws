@@ -20,16 +20,12 @@ jobs:
       # https://github.blog/changelog/2023-02-02-github-actions-updating-the-default-github_token-permissions-to-read-only/
       contents: write
     steps:
-      - name: Get latest commit sha
-        id: get-latest-commit
-        run: |
-            if ["${{ inputs.CommitSha }}" == ""]; then
-              echo "sha=$(git ls-remote ${{ env.UPSTREAM }} ${{ env.UPSTREAM_BRANCH }} | awk '{print $1;}')" >> $GITHUB_OUTPUT
-            else
-              echo "sha=${{ inputs.CommitSha }}" >> $GITHUB_OUTPUT
-            fi
       - name: Checkout
         uses: actions/checkout@v3
+        run: |
+          git config --global user.name 'Github Action'
+          git config --global user.email 'action@github.com'
+          git checkout ${{ env.UPSTREAM_BRANCH }}
       - name: Set up Go 1.x
         uses: actions/setup-go@v4
         with:
@@ -40,7 +36,9 @@ jobs:
       - name: switching from HTTPS to SSH
         run: git remote set-url origin UPSTREAM
       - name: check for changes
-        run: git status
+        run: |
+          git branch
+          git status
       - name: stage changed files
         run: git add .
       - name: commit changed files
@@ -49,6 +47,6 @@ jobs:
           git config --global user.email 'action@github.com'
           git commit -m "Auto updating changelog-aws.md"
       - name: fetch from master
-        run: git fetch upstream
+        run: git fetch UPSTREAM
       - name: push code to master
         run: git push origin CWQS-761
