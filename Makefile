@@ -288,9 +288,13 @@ chlog-validate: $(CHLOGGEN)
 chlog-validate-aws: $(CHLOGGEN)
 	$(CHLOGGEN) validate --config $(CHLOGGEN_CONFIG_AWS)
 
+.PHONY: chlog-preview-aws
+chlog-preview: $(CHLOGGEN)
+	$(CHLOGGEN) update --config $(CHLOGGEN_CONFIG_AWS) --dry
+
 .PHONY: chlog-preview
 chlog-preview: $(CHLOGGEN)
-	$(CHLOGGEN) update --config $(CHLOGGEN_CONFIG) --dry
+	$(CHLOGGEN) update --config .chloggen-aws/config.yaml --dry
 
 .PHONY: chlog-aws
 chlog-aws:
