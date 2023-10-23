@@ -21,7 +21,7 @@ jobs:
       - name: Commit updated CHANGELOG
         run: make chlog-preview-aws
       - name: switching from HTTPS to SSH
-        run: git remote set-url origin ${{ secrets.ssh }}
+        run: git remote set-url origin https://github.com/bhanuba/amazon-cloudwatch-agent-test.git
       - name: check for changes
         run: git status
       - name: stage changed files
