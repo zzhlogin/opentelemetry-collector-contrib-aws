@@ -40,7 +40,7 @@ jobs:
         run:
           git config --global user.name 'Github Action'
           git config --global user.email 'action@github.com'
-          git checkout -b otel-fork-replace-${{ steps.get-latest-commit.outputs.sha }}
+          git checkout -b update-changelog
           make chlog-update-aws
       - name: switching from HTTPS to SSH
         run: git remote set-url origin https://github.com/amazon-contributing/opentelemetry-collector-contrib.git
