@@ -298,7 +298,7 @@ chlog-aws:
 
 .PHONY: chlog-update-aws
 chlog-update-aws: $(CHLOGGEN)
-	$(CHLOGGEN) update --config .chloggen-aws/config.yaml --version $(VERSION)
+	$(CHLOGGEN) update --config .chloggen-aws/config.yaml --version `date +'%y.%m.%d %H:%M:%S'`
 
 .PHONY: chlog-update
 chlog-update: $(CHLOGGEN)
