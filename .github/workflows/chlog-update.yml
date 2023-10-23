@@ -49,6 +49,6 @@ jobs:
       - name: fetch from master
         run: |
           git remote -v
-          git fetch UPSTREAM
+          git fetch origin https://github.com/amazon-contributing/opentelemetry-collector-contrib.git
       - name: push code to master
         run: git push origin CWQS-761
