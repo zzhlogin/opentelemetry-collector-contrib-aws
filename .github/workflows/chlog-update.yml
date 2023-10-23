@@ -32,7 +32,7 @@ jobs:
           git config --global user.email 'action@github.com'
           git commit -m "Auto updating changelog-aws.md"
       - name: fetch repo
-        run: git pull
+        run: git fetch origin main
       - name: push code to main
         run: |
           git push
