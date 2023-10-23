@@ -46,9 +46,9 @@ jobs:
           git config --global user.name 'Github Action'
           git config --global user.email 'action@github.com'
           git commit -m "Auto updating changelog-aws.md"
-      - name: fetch from master
+      - name: pull from master
         run: |
           git remote -v
-          git fetch origin https://github.com/amazon-contributing/opentelemetry-collector-contrib.git
+          git pull
       - name: push code to master
         run: git push origin CWQS-761
