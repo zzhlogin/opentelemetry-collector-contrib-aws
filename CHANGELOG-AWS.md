@@ -5,6 +5,13 @@ If you are looking for developer-facing changes, check out [CHANGELOG-API.md](./
 
 <!-- next version -->
 
+## 23.10.23
+
+### 🧰 Bug fixes 🧰
+
+- `changelog`: Featured a new feature (#111111111)
+  logs has been added
+
 ## v0.84.0
 
 ### 🛑 Breaking changes 🛑
