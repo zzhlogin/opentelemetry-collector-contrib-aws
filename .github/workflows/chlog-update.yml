@@ -1,8 +1,8 @@
 name: Update changelog
 
-env:
-  UPSTREAM: https://github.com/amazon-contributing/opentelemetry-collector-contrib.git
-  UPSTREAM_BRANCH: CWQS-761
+#env:
+#  UPSTREAM: https://github.com/amazon-contributing/opentelemetry-collector-contrib.git
+#  UPSTREAM_BRANCH: CWQS-761
 
 on:
  push:
