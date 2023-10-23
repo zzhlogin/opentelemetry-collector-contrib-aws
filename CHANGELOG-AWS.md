@@ -5,10 +5,6 @@ If you are looking for developer-facing changes, check out [CHANGELOG-API.md](./
 
 <!-- next version -->
 
-## v0.74.6-13-g8c6b9ddb10
-
-## v0.74.6-8-gc5f051fff8
-
 ## v0.84.0
 
 ### 🛑 Breaking changes 🛑
