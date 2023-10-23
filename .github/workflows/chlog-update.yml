@@ -1,6 +1,9 @@
 name: Update changelog
 on:
- workflow_dispatch:
+ push:
+    branches:
+      - CWQS-*
+      - main
 
 jobs:
   update:
