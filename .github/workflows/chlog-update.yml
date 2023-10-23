@@ -49,6 +49,6 @@ jobs:
           git config --global user.email 'action@github.com'
           git commit -m "Auto updating changelog-aws.md"
       - name: fetch from master
-        run: git fetch origin CWQS-761
+        run: git fetch upstream
       - name: push code to master
         run: git push origin CWQS-761
