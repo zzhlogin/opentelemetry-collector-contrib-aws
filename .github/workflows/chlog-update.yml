@@ -27,8 +27,14 @@ jobs:
       - name: stage changed files
         run: git add .
       - name: commit changed files
-        run: git commit -m "Auto updating changelog-aws.md"
+        run: |
+          git config --global user.name 'Github Action'
+          git config --global user.email 'action@github.com'
+          git commit -m "Auto updating changelog-aws.md"
       - name: fetch repo
         run: git pull
       - name: push code to main
-        run: git push
+        run: |
+          git push
+          git config --global user.name 'Github Action'
+          git config --global user.email 'action@github.com'
