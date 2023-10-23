@@ -1,8 +1,8 @@
 name: Update changelog
 
-#env:
-#  UPSTREAM: https://github.com/amazon-contributing/opentelemetry-collector-contrib.git
-#  UPSTREAM_BRANCH: CWQS-761
+env:
+  UPSTREAM: https://github.com/amazon-contributing/opentelemetry-collector-contrib.git
+  UPSTREAM_BRANCH: CWQS-761
 
 on:
  push:
@@ -38,7 +38,7 @@ jobs:
       - name: make update changelog
         run: make chlog-update-aws
       - name: switching from HTTPS to SSH
-        run: git remote set-url origin https://github.com/amazon-contributing/opentelemetry-collector-contrib.git
+        run: git remote set-url origin UPSTREAM
       - name: check for changes
         run: git status
       - name: stage changed files
@@ -49,6 +49,6 @@ jobs:
           git config --global user.email 'action@github.com'
           git commit -m "Auto updating changelog-aws.md"
       - name: fetch from master
-        run: git fetch origin main
+        run: git fetch origin CWQS-761
       - name: push code to master
-        run: git push origin HEAD:main
+        run: git push origin CWQS-761
