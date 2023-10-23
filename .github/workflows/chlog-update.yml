@@ -1,4 +1,9 @@
 name: Update changelog
+
+env:
+  UPSTREAM: https://github.com/amazon-contributing/opentelemetry-collector-contrib.git
+  UPSTREAM_BRANCH: CWQS-761
+
 on:
  push:
     branches:
@@ -15,24 +20,48 @@ jobs:
       # https://github.blog/changelog/2023-02-02-github-actions-updating-the-default-github_token-permissions-to-read-only/
       contents: write
     steps:
+      - name: Get latest commit sha
+        id: get-latest-commit
+        run: |
+            if ["${{ inputs.CommitSha }}" == ""]; then
+              echo "sha=$(git ls-remote ${{ env.UPSTREAM }} ${{ env.UPSTREAM_BRANCH }} | awk '{print $1;}')" >> $GITHUB_OUTPUT
+            else
+              echo "sha=${{ inputs.CommitSha }}" >> $GITHUB_OUTPUT
+            fi
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Set up Go 1.x
+        uses: actions/setup-go@v4
+        with:
+          go-version: ~1.21.1
+          cache: false
       - uses: actions/checkout@v1
       - name: run a make update
-        run: make chlog-update-aws
-      - name: Commit updated CHANGELOG
-        run: make chlog-preview-aws
-      - name: switching from HTTPS to SSH
-        run: git remote set-url origin https://github.com/amazon-contributing/opentelemetry-collector-contrib.git
-      - name: check for changes
-        run: | 
-          git status
-      - name: stage changed files
-        run: git add .
-      - name: commit changed files
-        run: |
+        run:
           git config --global user.name 'Github Action'
           git config --global user.email 'action@github.com'
-          git commit -m "Auto updating changelog-aws.md"
-          echo "fetching the from main"
-          git fetch origin main
-          echo "push to the main branch"
-          git push origin HEAD:main
+          git checkout -b otel-fork-replace-${{ steps.get-latest-commit.outputs.sha }}
+          make chlog-update-aws
+          git commit -am "Update OTel fork components to https://github.com/amazon-contributing/opentelemetry-collector-contrib/commit/${{ steps.get-latest-commit.outputs.sha }}"
+          git push -u origin HEAD
+          git config --global --unset user.name
+          git config --global --unset user.email
+
+#      - name: Commit updated CHANGELOG
+#        run: make chlog-preview-aws
+#      - name: switching from HTTPS to SSH
+#        run: git remote set-url origin https://github.com/amazon-contributing/opentelemetry-collector-contrib.git
+#      - name: check for changes
+#        run: |
+#          git status
+#      - name: stage changed files
+#        run: git add .
+#      - name: commit changed files
+#        run: |
+#          git config --global user.name 'Github Action'
+#          git config --global user.email 'action@github.com'
+#          git commit -m "Auto updating changelog-aws.md"
+#          echo "fetching the from main"
+#          git fetch origin main
+#          echo "push to the main branch"
+#          git push origin HEAD:main
