@@ -5,62 +5,6 @@ If you are looking for developer-facing changes, check out [CHANGELOG-API.md](./
 
 <!-- next version -->
 
-## v9.1.3
-
-### 🚩 Deprecations 🚩
-
-- `filepullrequest`: Featured a new feature (#23221)
-  nothing
-
-### 🚩 Deprecations 🚩
-
-- `filepullrequest`: Featured a new feature (#23221)
-  nothing
-
-### 🛑 Breaking changes 🛑
-
-- `prometheusexporters`: Append prometheus type and unit suffixes by default in prometheus exporters. (#26488)
-  Suffixes can be disabled by setting add_metric_suffixes to false on the exporter.
-- `attributesprocessor, resourceprocessor`: Transition featuregate `coreinternal.attraction.hash.sha256` to stable (#4759)
-
-### 💡 Enhancements 💡
-
-- `awsxrayexporter`: Convert individual HTTP error events into exceptions within subsegments for AWS SDK spans and strip AWS.SDK prefix from remote aws service name (#27232)
-- `postgresqlreceiver`: Added `postgresql.database.locks` metric. (#26317)
-- `receiver/statsdreceiver`: Add support for distribution type metrics in the statsdreceiver. (#24768)
-- `awsxrayexporter`: AWS X-Ray exporter to make local root spans a segment for internal/service spans and subsegment + segment for client/producer/consumer spans. (#102)
-- `pkg/ottl`: Add converters to convert time to unix nanoseconds, unix microseconds, unix milliseconds or unix seconds (#24686)
-- `oauth2clientauthextension`: Enable dynamically reading ClientID and ClientSecret from files (#26117)
-  - Read the client ID and/or secret from a file by specifying the file path to the ClientIDFile (`client_id_file`) and ClientSecretFile (`client_secret_file`) fields respectively.
-  - The file is read every time the client issues a new token. This means that the corresponding value can change dynamically during the execution by modifying the file contents.
-  
-- `receiver/hostmetrics`: Don't collect connections data from the host if system.network.connections metric is disabled to not waste CPU cycles. (#25815)
-- `jaegerreceiver,jaegerremotesamplingextension`: Add featuregates to replace Thrift-gen with Proto-gen types for sampling strategies (#18401)
-  Available featuregates are:
-  - extension.jaegerremotesampling.replaceThriftWithProto
-  - receiver.jaegerreceiver.replaceThriftWithProto
-  
-- `influxdbexporter`: Add user-configurable LogRecord dimensions (otel attributes -> InfluxDB tags) (#26342)
-- `k8sclusterreceiver`: Add k8s.pod.status_reason option metric (#24034)
-- `k8sobjectreceiver`: Adds option to exclude event types (MODIFIED, DELETED, etc) in watch mode. (#26042)
-- `datadogexporter`: Host metadata for remote hosts is now reported on first sight or on change (#25145)
-  Host metadata for remote hosts will only be sent for payloads with the datadog.host.use_as_metadata resource attribute.
-  
-- `awsxrayexporter`: Change `exporter.awsxray.skiptimestampvalidation` feature gate from Alpha to Beta (#26553)
-
-### 🧰 Bug fixes 🧰
-
-- `processor/routing`: When using attributes instead of resource attributes, the routing processor would crash the collector. This does not affect the connector version of this component. (#26462)
-- `awsemfexporter`: Fix possible panic in when configuration option `awsemf.output_destination:stdout` is set (#26250)
-- `snmpreceiver`: Fix how to determine how many RAs on a metric are scalar (#26363)
-  We now create the proper number of resources for configurations where a resource uses fewer than the available number of scalar resource attribtues.
-- `processor/tailsampling`: Added saving instrumentation library information for tail-sampling (#13642)
-- `receiver/kubeletstats`: Fixes client to refresh service account token when authenticating with kubelet (#26120)
-- `datadogexporter`: Fixes crash when mapping OTLP Exponential Histograms with no buckets. These will now be dropped instead. (#26103)
-- `filelogreceiver`: Fix the behavior of the add operator to continue to support EXPR(env("MY_ENV_VAR")) expressions (#26373)
-- `snmpreceiver`: SNMP values of type Counter64 were seen as unsupported, because the returned data type unint64 was unhandeled. (#23897, #26119)
-- `pkg/stanza`: Fix issue unsupported type 'syslog_parser' (#26452)
-
 ## v0.84.0
 
 ### 🛑 Breaking changes 🛑
