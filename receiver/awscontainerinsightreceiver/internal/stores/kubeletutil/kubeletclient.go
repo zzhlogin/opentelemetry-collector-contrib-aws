@@ -26,7 +26,7 @@ func NewKubeletClient(kubeIP string, port string, logger *zap.Logger) (*KubeletC
 		KubeIP: kubeIP,
 	}
 
-	endpoint := kubeIP + ":" + port
+	endpoint := "[" + kubeIP + "]" + ":" + port
 
 	// use service account for authentication
 	clientConfig := &kubelet.ClientConfig{
