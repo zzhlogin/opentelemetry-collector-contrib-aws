@@ -201,3 +201,8 @@ func TestUtils_TagMetricSource(t *testing.T) {
 		assert.Equal(t, expectedSources[i], metric.tags[ci.SourcesKey])
 	}
 }
+
+func Test_maxUint64(t *testing.T) {
+	assert.Equal(t, uint64(10), maxUint64(uint64(5), uint64(10)))
+	assert.Equal(t, uint64(10), maxUint64(uint64(10), uint64(5)))
+}

@@ -628,6 +628,8 @@ func (p *PodStore) addPodContainerStatusMetrics(metric CIMetric, pod *corev1.Pod
 func getResourceSettingForPod(pod *corev1.Pod, bound uint64, resource corev1.ResourceName, fn func(resource corev1.ResourceName, spec corev1.Container) (uint64, bool)) (uint64, bool) {
 	var result uint64
 	allSet := true
+
+	// calculate resources used by app containers i.e sum(containers)
 	for _, containerSpec := range pod.Spec.Containers {
 		val, ok := fn(resource, containerSpec)
 		if ok {
@@ -636,6 +638,36 @@ func getResourceSettingForPod(pod *corev1.Pod, bound uint64, resource corev1.Res
 			allSet = false
 		}
 	}
+
+	// calculate added resources used by initContainers(Sidecar, nonSideCar)
+	var initContainerVal, sideCarInitContainerVal uint64
+	for _, containerSpec := range pod.Spec.InitContainers {
+		val, ok := fn(resource, containerSpec)
+		if ok {
+			if containerSpec.RestartPolicy != nil && *containerSpec.RestartPolicy == corev1.ContainerRestartPolicyAlways {
+				result += val
+				sideCarInitContainerVal += val
+				val = sideCarInitContainerVal
+			} else {
+				var tmp uint64
+				tmp += val
+				tmp += sideCarInitContainerVal
+				val = tmp
+			}
+			initContainerVal = maxUint64(initContainerVal, val)
+		} else {
+			allSet = false
+		}
+	}
+	result = maxUint64(result, initContainerVal)
+
+	// add pod overhead to final value
+	if pod.Spec.Overhead != nil {
+		if value, ok := pod.Spec.Overhead[resource]; ok {
+			result += uint64(value.Value())
+		}
+	}
+
 	if bound != 0 && result > bound {
 		result = bound
 	}

@@ -174,3 +174,10 @@ func refreshWithTimeout(parentContext context.Context, refresh func(), timeout t
 	<-ctx.Done()
 	cancel()
 }
+
+func maxUint64(x, y uint64) uint64 {
+	if x < y {
+		return y
+	}
+	return x
+}
