@@ -177,9 +177,9 @@ func (acir *awsContainerInsightReceiver) startPrometheusScraper(ctx context.Cont
 	return err
 }
 func (acir *awsContainerInsightReceiver) startDcgmScraper(ctx context.Context, host component.Host, hostinfo *hostInfo.Info) error {
-	if !acir.config.EnableGpuMetric {
-		return nil
-	}
+	//if !acir.config.EnableGpuMetric {
+	//	return nil
+	//}
 
 	endpoint, err := acir.getK8sAPIServerEndpoint()
 	if err != nil {
