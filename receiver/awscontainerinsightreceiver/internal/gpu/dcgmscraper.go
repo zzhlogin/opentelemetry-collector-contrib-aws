@@ -7,6 +7,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	configutil "github.com/prometheus/common/config"
+	"github.com/prometheus/prometheus/discovery/kubernetes"
 	"io"
 	"net/http"
 	"time"
@@ -93,127 +95,69 @@ func NewDcgmScraper(opts DcgmScraperOpts) (*DcgmScraper, error) {
 	//apiserverUrl, _ := url.Parse(fmt.Sprintf("https://%s", opts.Endpoint))
 
 	scrapeConfig := &config.ScrapeConfig{
-		//HTTPClientConfig: configutil.HTTPClientConfig{
-		//	//BasicAuth: &configutil.BasicAuth{
-		//	//	Username: "cwagent",
-		//	//	Password: "cwagent-dcgm-exporter",
-		//	//},
-		//	//Authorization: &configutil.Authorization{
-		//	//	Type: "basic_auth",
-		//	//},
-		//	//TLSConfig: configutil.TLSConfig{
-		//	//	CAFile:             caFile,
-		//	//	InsecureSkipVerify: false,
-		//	//},
-		//},
+		HTTPClientConfig: configutil.HTTPClientConfig{
+			TLSConfig: configutil.TLSConfig{
+				CAFile:             caFile,
+				InsecureSkipVerify: true,
+			},
+		},
 		ScrapeInterval: model.Duration(collectionInterval),
 		ScrapeTimeout:  model.Duration(collectionInterval),
 		JobName:        jobName,
 		Scheme:         "http",
 		MetricsPath:    "/metrics",
 		ServiceDiscoveryConfigs: discovery.Configs{
-			&discovery.StaticConfig{
-				{
-					Targets: []model.LabelSet{
-						{
-							model.AddressLabel: model.LabelValue("192.168.72.110:9400"),
-						},
-					},
-				},
+			&kubernetes.SDConfig{
+				Role: kubernetes.RoleEndpoint,
 			},
-			//192.168.72.110:9400
-			//&kubernetes.SDConfig{
-			//	APIServer: configutil.URL{
-			//		URL: apiserverUrl,
-			//	},
-			//	HTTPClientConfig: configutil.HTTPClientConfig{
-			//		TLSConfig: configutil.TLSConfig{
-			//			CAFile:             caFile,
-			//			InsecureSkipVerify: false,
-			//		},
-			//		Authorization: &configutil.Authorization{
-			//			Type: "Bearer",
-			//		},
-			//		BearerToken: configutil.Secret(opts.BearerToken),
-			//	},
-			//	Role: kubernetes.RolePod,
-			//	//Role: kubernetes.RoleService,
-			//	//NamespaceDiscovery: kubernetes.NamespaceDiscovery{
-			//	//	IncludeOwnNamespace: true,
-			//	//},
-			//	Selectors: []kubernetes.SelectorConfig{
-			//		{
-			//			Role:  kubernetes.RolePod,
-			//			Label: "k8s-app=dcgm-exporter",
-			//		},
-			//		//{
-			//		//	Role:  kubernetes.RoleService,
-			//		//	Label: "k8s-app=dcgm-exporter-service",
-			//		//},
-			//	},
-			//},
 		},
+		//ServiceDiscoveryConfigs: discovery.Configs{
+		//	&discovery.StaticConfig{
+		//		{
+		//			Targets: []model.LabelSet{
+		//				{
+		//					model.AddressLabel: model.LabelValue("192.168.72.110:9400"),
+		//				},
+		//			},
+		//		},
+		//	},
+		//	//192.168.72.110:9400
+		//	//&kubernetes.SDConfig{
+		//	//	APIServer: configutil.URL{
+		//	//		URL: apiserverUrl,
+		//	//	},
+		//	//	HTTPClientConfig: configutil.HTTPClientConfig{
+		//	//		TLSConfig: configutil.TLSConfig{
+		//	//			CAFile:             caFile,
+		//	//			InsecureSkipVerify: false,
+		//	//		},
+		//	//		Authorization: &configutil.Authorization{
+		//	//			Type: "Bearer",
+		//	//		},
+		//	//		BearerToken: configutil.Secret(opts.BearerToken),
+		//	//	},
+		//	//	Role: kubernetes.RolePod,
+		//	//	//Role: kubernetes.RoleService,
+		//	//	//NamespaceDiscovery: kubernetes.NamespaceDiscovery{
+		//	//	//	IncludeOwnNamespace: true,
+		//	//	//},
+		//	//	Selectors: []kubernetes.SelectorConfig{
+		//	//		{
+		//	//			Role:  kubernetes.RolePod,
+		//	//			Label: "k8s-app=dcgm-exporter",
+		//	//		},
+		//	//		//{
+		//	//		//	Role:  kubernetes.RoleService,
+		//	//		//	Label: "k8s-app=dcgm-exporter-service",
+		//	//		//},
+		//	//	},
+		//	//},
+		//},
 		MetricRelabelConfigs: []*relabel.Config{
-			//{
-			//	SourceLabels: model.LabelNames{"__meta_kubernetes_pod_container_name"},
-			//	Regex:        relabel.MustNewRegexp(".*dcgm.*"),
-			//	Action:       relabel.Keep,
-			//},
-			{
-				SourceLabels: model.LabelNames{"__meta_kubernetes_pod_name"},
-				Regex:        relabel.MustNewRegexp("dcgm.*"),
-				Action:       relabel.Keep,
-			},
-			{
-				SourceLabels: model.LabelNames{"__meta_kubernetes_service_name"},
-				Regex:        relabel.MustNewRegexp("dcgm.*service"),
-				Action:       relabel.Keep,
-			},
-			{
-				SourceLabels: model.LabelNames{"__address__"},
-				Regex:        relabel.MustNewRegexp("([^:]+)(?::\\d+)?"),
-				Replacement:  "${1}:9400",
-				TargetLabel:  "__address__",
-				Action:       relabel.Replace,
-			},
-			{
-				Regex:  relabel.MustNewRegexp("__meta_kubernetes_pod_label_(.+)"),
-				Action: relabel.LabelMap,
-			},
-			{
-				SourceLabels: model.LabelNames{"__meta_kubernetes_namespace"},
-				TargetLabel:  "Namespace",
-				Action:       relabel.Replace,
-			},
-			{
-				SourceLabels: model.LabelNames{"__meta_kubernetes_pod_name"},
-				TargetLabel:  "pod",
-				Action:       relabel.Replace,
-			},
 			{
 				SourceLabels: model.LabelNames{"__meta_kubernetes_pod_container_name"},
-				TargetLabel:  "container_name",
-				Action:       relabel.Replace,
-			},
-			{
-				SourceLabels: model.LabelNames{"__meta_kubernetes_pod_controller_name"},
-				TargetLabel:  "pod_controller_name",
-				Action:       relabel.Replace,
-			},
-			{
-				SourceLabels: model.LabelNames{"__meta_kubernetes_pod_controller_kind"},
-				TargetLabel:  "pod_controller_kind",
-				Action:       relabel.Replace,
-			},
-			{
-				SourceLabels: model.LabelNames{"__meta_kubernetes_pod_phase"},
-				TargetLabel:  "pod_phase",
-				Action:       relabel.Replace,
-			},
-			{
-				SourceLabels: model.LabelNames{"__meta_kubernetes_pod_node_name"},
-				TargetLabel:  "NodeName",
-				Action:       relabel.Replace,
+				Regex:        relabel.MustNewRegexp(".*dcgm.*"),
+				Action:       relabel.Keep,
 			},
 		},
 	}
