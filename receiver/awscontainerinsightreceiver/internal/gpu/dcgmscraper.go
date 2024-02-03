@@ -9,8 +9,6 @@ import (
 	"fmt"
 	configutil "github.com/prometheus/common/config"
 	"github.com/prometheus/prometheus/discovery/kubernetes"
-	"io"
-	"net/http"
 	"time"
 
 	"github.com/prometheus/common/model"
@@ -188,18 +186,18 @@ func NewDcgmScraper(opts DcgmScraperOpts) (*DcgmScraper, error) {
 }
 
 func (ds *DcgmScraper) GetMetrics() []pmetric.Metrics {
-	client := &http.Client{}
-	req, err := http.NewRequest("GET", "http://dcgm-exporter-service:9400/metrics", nil)
-	//req.SetBasicAuth("cwagent", "cwagent-dcgm-exporter")
-	resp, err := client.Do(req)
-	if err != nil {
-		ds.settings.Logger.Info(fmt.Sprintf("======================== HTTP/Get Error: %s", err))
-	}
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		ds.settings.Logger.Info(fmt.Sprintf("======================== ReadAll Error: %s", err))
-	}
-	ds.settings.Logger.Info(fmt.Sprintf("======================== Metric Body: %s", string(body)))
+	//client := &http.Client{}
+	//req, err := http.NewRequest("GET", "http://dcgm-exporter-service:9400/metrics", nil)
+	////req.SetBasicAuth("cwagent", "cwagent-dcgm-exporter")
+	//resp, err := client.Do(req)
+	//if err != nil {
+	//	ds.settings.Logger.Info(fmt.Sprintf("======================== HTTP/Get Error: %s", err))
+	//}
+	//body, err := io.ReadAll(resp.Body)
+	//if err != nil {
+	//	ds.settings.Logger.Info(fmt.Sprintf("======================== ReadAll Error: %s", err))
+	//}
+	//ds.settings.Logger.Info(fmt.Sprintf("======================== Metric Body: %s", string(body)))
 
 	// This method will never return metrics because the metrics are collected by the scraper.
 	// This method will ensure the scraper is running
