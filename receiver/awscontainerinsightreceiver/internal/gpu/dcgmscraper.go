@@ -106,7 +106,13 @@ func NewDcgmScraper(opts DcgmScraperOpts) (*DcgmScraper, error) {
 		MetricsPath:    "/metrics",
 		ServiceDiscoveryConfigs: discovery.Configs{
 			&kubernetes.SDConfig{
-				Role: kubernetes.RoleEndpoint,
+				Role: kubernetes.RolePod,
+				Selectors: []kubernetes.SelectorConfig{
+					{
+						Role:  kubernetes.RolePod,
+						Label: "app=nvidia-dcgm-exporter",
+					},
+				},
 			},
 		},
 		//ServiceDiscoveryConfigs: discovery.Configs{
