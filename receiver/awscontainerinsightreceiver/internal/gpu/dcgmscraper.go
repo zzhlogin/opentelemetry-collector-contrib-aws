@@ -158,11 +158,11 @@ func NewDcgmScraper(opts DcgmScraperOpts) (*DcgmScraper, error) {
 		//	//},
 		//},
 		MetricRelabelConfigs: []*relabel.Config{
-			{
-				SourceLabels: model.LabelNames{"__meta_kubernetes_pod_container_name"},
-				Regex:        relabel.MustNewRegexp(".*dcgm.*"),
-				Action:       relabel.Keep,
-			},
+			//{
+			//	SourceLabels: model.LabelNames{"__meta_kubernetes_pod_container_name"},
+			//	Regex:        relabel.MustNewRegexp(".*dcgm.*"),
+			//	Action:       relabel.Keep,
+			//},
 		},
 	}
 
