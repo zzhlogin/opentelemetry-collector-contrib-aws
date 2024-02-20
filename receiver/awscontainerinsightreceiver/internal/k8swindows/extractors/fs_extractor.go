@@ -35,6 +35,10 @@ func (f *FileSystemMetricExtractor) GetValue(rawMetric RawMetric, _ cExtractor.C
 	for _, v := range rawMetric.FileSystemStats {
 		metric := stores.NewRawContainerInsightsMetric(containerType, f.logger)
 
+		if v.Name != "" {
+			metric.AddTag(ci.DiskDev, v.Name)
+		}
+
 		metric.AddField(ci.MetricName(containerType, ci.FSUsage), v.UsedBytes)
 		metric.AddField(ci.MetricName(containerType, ci.FSCapacity), v.CapacityBytes)
 		metric.AddField(ci.MetricName(containerType, ci.FSAvailable), v.AvailableBytes)

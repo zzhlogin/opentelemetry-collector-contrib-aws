@@ -32,6 +32,7 @@ type MemoryStat struct {
 // FileSystemStat for Container and Node.
 type FileSystemStat struct {
 	Time           time.Time
+	Name           string
 	AvailableBytes uint64
 	CapacityBytes  uint64
 	UsedBytes      uint64
