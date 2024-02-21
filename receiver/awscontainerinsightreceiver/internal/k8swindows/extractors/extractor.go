@@ -33,6 +33,8 @@ type MemoryStat struct {
 type FileSystemStat struct {
 	Time           time.Time
 	Name           string
+	Device         string
+	Type           string
 	AvailableBytes uint64
 	CapacityBytes  uint64
 	UsedBytes      uint64
