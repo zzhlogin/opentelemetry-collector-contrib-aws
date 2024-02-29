@@ -233,7 +233,7 @@ func TestUtils_TagMetricSourceWindows(t *testing.T) {
 	for i, mtype := range types {
 		tags := map[string]string{
 			ci.MetricType:      mtype,
-			ci.OperatingSystem: "windows",
+			ci.OperatingSystem: ci.OperatingSystemWindows,
 		}
 
 		metric := &mockCIMetric{
