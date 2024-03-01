@@ -9,6 +9,7 @@ package k8swindows // import "github.com/open-telemetry/opentelemetry-collector-
 import (
 	"fmt"
 	"os"
+	"strconv"
 
 	ci "github.com/open-telemetry/opentelemetry-collector-contrib/internal/aws/containerinsight"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/awscontainerinsightreceiver/internal/host"
@@ -66,13 +67,15 @@ func (k *kubeletSummaryProvider) getPodMetrics(summary *stats.Summary) ([]*store
 	for _, pod := range summary.Pods {
 		k.logger.Info(fmt.Sprintf("pod summary %v", pod.PodRef.Name))
 		metric := stores.NewRawContainerInsightsMetric(ci.TypePod, k.logger)
+		tags := map[string]string{}
 
-		metric.AddField(ci.AttributePodID, pod.PodRef.UID)
-		metric.AddField(ci.AttributeK8sPodName, pod.PodRef.Name)
-		metric.AddField(ci.AttributeK8sNamespace, pod.PodRef.Namespace)
+		tags[ci.AttributePodID] = pod.PodRef.UID
+		tags[ci.AttributeK8sPodName] = pod.PodRef.Name
+		tags[ci.AttributeK8sNamespace] = pod.PodRef.Namespace
+		tags[ci.Timestamp] = strconv.FormatInt(pod.CPU.Time.UnixNano(), 10)
 
 		// CPU metric
-		metric.AddField(ci.MetricName(ci.TypePod, ci.CPUTotal), *pod.CPU.UsageCoreNanoSeconds)
+		metric.AddField(ci.MetricName(ci.TypePod, ci.CPUTotal), float64(*pod.CPU.UsageCoreNanoSeconds))
 		metric.AddField(ci.MetricName(ci.TypePod, ci.CPUUtilization), float64(*pod.CPU.UsageCoreNanoSeconds)/float64(nodeCPUCores))
 
 		// Memory metrics
@@ -81,6 +84,8 @@ func (k *kubeletSummaryProvider) getPodMetrics(summary *stats.Summary) ([]*store
 		metric.AddField(ci.MetricName(ci.TypePod, ci.MemWorkingset), *pod.Memory.WorkingSetBytes)
 		metric.AddField(ci.MetricName(ci.TypePod, ci.MemReservedCapacity), k.hostInfo.GetMemoryCapacity())
 		metric.AddField(ci.MetricName(ci.TypePod, ci.MemUtilization), float64(*pod.Memory.WorkingSetBytes)/float64(k.hostInfo.GetMemoryCapacity())*100)
+
+		metric.AddTags(tags)
 		metrics = append(metrics, metric)
 	}
 	return metrics, nil
