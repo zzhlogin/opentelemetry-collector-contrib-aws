@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"time"
 
+	configutil "github.com/prometheus/common/config"
 	"github.com/prometheus/common/model"
 	"github.com/prometheus/prometheus/config"
 	"github.com/prometheus/prometheus/discovery"
@@ -24,7 +25,7 @@ import (
 )
 
 const (
-	caFile             = "/var/run/secrets/kubernetes.io/serviceaccount/ca.crt"
+	caFile             = "/etc/amazon-cloudwatch-observability-appsignals-cert/tls-ca.crt"
 	collectionInterval = 60 * time.Second
 	jobName            = "containerInsightsDCGMExporterScraper"
 )
@@ -63,10 +64,16 @@ func NewDcgmScraper(opts DcgmScraperOpts) (*DcgmScraper, error) {
 	}
 
 	scrapeConfig := &config.ScrapeConfig{
+		HTTPClientConfig: configutil.HTTPClientConfig{
+			TLSConfig: configutil.TLSConfig{
+				CAFile:             caFile,
+				InsecureSkipVerify: false,
+			},
+		},
 		ScrapeInterval: model.Duration(collectionInterval),
 		ScrapeTimeout:  model.Duration(collectionInterval),
 		JobName:        jobName,
-		Scheme:         "http",
+		Scheme:         "https",
 		MetricsPath:    "/metrics",
 		ServiceDiscoveryConfigs: discovery.Configs{
 			&kubernetes.SDConfig{
