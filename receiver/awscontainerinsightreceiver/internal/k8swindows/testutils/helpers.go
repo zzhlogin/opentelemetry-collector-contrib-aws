@@ -1,4 +1,10 @@
-package testutils
+// Copyright The OpenTelemetry Authors
+// SPDX-License-Identifier: Apache-2.0
+
+//go:build windows
+// +build windows
+
+package testutils // import "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/awscontainerinsightreceiver/internal/k8swindows/testutils"
 
 import (
 	"encoding/json"

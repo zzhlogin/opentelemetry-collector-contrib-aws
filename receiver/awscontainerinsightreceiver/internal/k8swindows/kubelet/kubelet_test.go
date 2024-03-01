@@ -64,20 +64,20 @@ func TestGetPodMetrics(t *testing.T) {
 
 	podMetric := metrics[1]
 	assert.Equal(t, podMetric.GetMetricType(), ci.TypePod)
-	assert.NotNil(t, podMetric.GetTag(ci.PodIDKey))
-	assert.NotNil(t, podMetric.GetTag(ci.K8sPodNameKey))
-	assert.NotNil(t, podMetric.GetTag(ci.K8sNamespace))
+	assert.NotNil(t, podMetric.GetTag(ci.AttributePodID))
+	assert.NotNil(t, podMetric.GetTag(ci.AttributeK8sPodName))
+	assert.NotNil(t, podMetric.GetTag(ci.AttributeK8sNamespace))
 	assert.NotNil(t, podMetric.GetTag(ci.Timestamp))
 	assert.NotNil(t, podMetric.GetTag(ci.SourcesKey))
 
 	containerMetric := metrics[len(metrics)-1]
 	assert.Equal(t, containerMetric.GetMetricType(), ci.TypeContainer)
-	assert.NotNil(t, containerMetric.GetTag(ci.PodIDKey))
-	assert.NotNil(t, containerMetric.GetTag(ci.K8sPodNameKey))
-	assert.NotNil(t, containerMetric.GetTag(ci.K8sNamespace))
+	assert.NotNil(t, containerMetric.GetTag(ci.AttributePodID))
+	assert.NotNil(t, containerMetric.GetTag(ci.AttributeK8sPodName))
+	assert.NotNil(t, containerMetric.GetTag(ci.AttributeK8sNamespace))
 	assert.NotNil(t, containerMetric.GetTag(ci.Timestamp))
-	assert.NotNil(t, containerMetric.GetTag(ci.ContainerNamekey))
-	assert.NotNil(t, containerMetric.GetTag(ci.ContainerIDkey))
+	assert.NotNil(t, containerMetric.GetTag(ci.AttributeContainerName))
+	assert.NotNil(t, containerMetric.GetTag(ci.AttributeContainerID))
 	assert.NotNil(t, containerMetric.GetTag(ci.SourcesKey))
 }
 
@@ -93,12 +93,12 @@ func TestGetContainerMetrics(t *testing.T) {
 
 	containerMetric := metrics[1]
 	assert.Equal(t, containerMetric.GetMetricType(), ci.TypeContainer)
-	assert.NotNil(t, containerMetric.GetTag(ci.PodIDKey))
-	assert.NotNil(t, containerMetric.GetTag(ci.K8sPodNameKey))
-	assert.NotNil(t, containerMetric.GetTag(ci.K8sNamespace))
+	assert.NotNil(t, containerMetric.GetTag(ci.AttributePodID))
+	assert.NotNil(t, containerMetric.GetTag(ci.AttributeK8sPodName))
+	assert.NotNil(t, containerMetric.GetTag(ci.AttributeK8sNamespace))
 	assert.NotNil(t, containerMetric.GetTag(ci.Timestamp))
-	assert.NotNil(t, containerMetric.GetTag(ci.ContainerNamekey))
-	assert.NotNil(t, containerMetric.GetTag(ci.ContainerIDkey))
+	assert.NotNil(t, containerMetric.GetTag(ci.AttributeContainerName))
+	assert.NotNil(t, containerMetric.GetTag(ci.AttributeContainerID))
 	assert.NotNil(t, containerMetric.GetTag(ci.SourcesKey))
 }
 
