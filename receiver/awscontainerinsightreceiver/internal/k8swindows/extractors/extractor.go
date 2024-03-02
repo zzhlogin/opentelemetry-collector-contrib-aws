@@ -5,6 +5,8 @@ import (
 
 	cExtractor "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/awscontainerinsightreceiver/internal/cadvisor/extractors"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/awscontainerinsightreceiver/internal/stores"
+
+	"github.com/Microsoft/hcsshim"
 )
 
 // CPUStat for Pod, Container and Node.
@@ -12,6 +14,8 @@ type CPUStat struct {
 	Time                 time.Time
 	UsageNanoCores       uint64
 	UsageCoreNanoSeconds uint64
+	UserCPUUsage         uint64
+	SystemCPUUsage       uint64
 }
 
 // MemoryStat for Pod, Container and Node
@@ -25,6 +29,7 @@ type MemoryStat struct {
 	MajorPageFaults uint64
 }
 
+// FileSystemStat for Container and Node.
 type FileSystemStat struct {
 	Time           time.Time
 	AvailableBytes uint64
@@ -32,13 +37,36 @@ type FileSystemStat struct {
 	UsedBytes      uint64
 }
 
+// NetworkStat for Pod and Node.
 type NetworkStat struct {
-	Time     time.Time
-	Name     string
-	RxBytes  uint64
-	RxErrors uint64
-	TxBytes  uint64
-	TxErrors uint64
+	Time            time.Time
+	Name            string
+	RxBytes         uint64
+	RxErrors        uint64
+	TxBytes         uint64
+	TxErrors        uint64
+	DroppedIncoming uint64
+	DroppedOutgoing uint64
+}
+
+// HCSNetworkStat Network Stat from HCS.
+type HCSNetworkStat struct {
+	Name                   string
+	BytesReceived          uint64
+	BytesSent              uint64
+	DroppedPacketsIncoming uint64
+	DroppedPacketsOutgoing uint64
+}
+
+// HCSStat Stats from HCS.
+type HCSStat struct {
+	Time time.Time
+	Id   string
+	Name string
+
+	CPU *hcsshim.ProcessorStats
+
+	Network *[]HCSNetworkStat
 }
 
 // RawMetric Represent Container, Pod, Node Metric  Extractors.
