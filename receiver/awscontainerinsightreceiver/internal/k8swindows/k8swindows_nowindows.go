@@ -7,15 +7,14 @@
 package k8swindows // import "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/awscontainerinsightreceiver/internal/k8swindows"
 
 import (
-	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/awscontainerinsightreceiver/internal/host"
-	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/awscontainerinsightreceiver/internal/stores"
-
 	"go.opentelemetry.io/collector/pdata/pmetric"
 	"go.uber.org/zap"
+
+	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/awscontainerinsightreceiver/internal/host"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/awscontainerinsightreceiver/internal/stores"
 )
 
-type K8sWindows struct {
-}
+type K8sWindows struct{}
 
 // New is a dummy function to construct a dummy K8sWindows struct for linux
 func New(_ *zap.Logger, _ *stores.K8sDecorator, _ host.Info) (*K8sWindows, error) {

@@ -90,7 +90,8 @@ func (acir *awsContainerInsightReceiver) Start(ctx context.Context, host compone
 				return err
 			}
 
-			leaderElection, err := k8sapiserver.NewLeaderElection(acir.settings.Logger, k8sapiserver.WithLeaderLockName(acir.config.LeaderLockName),
+			var leaderElection *k8sapiserver.LeaderElection
+			leaderElection, err = k8sapiserver.NewLeaderElection(acir.settings.Logger, k8sapiserver.WithLeaderLockName(acir.config.LeaderLockName),
 				k8sapiserver.WithLeaderLockUsingConfigMapOnly(acir.config.LeaderLockUsingConfigMapOnly))
 			if err != nil {
 				return err
