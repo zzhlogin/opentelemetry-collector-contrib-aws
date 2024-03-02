@@ -107,8 +107,6 @@ func (sp *SummaryProvider) getContainerMetrics(pod stats.PodStats) ([]*stores.Ra
 
 // getPodMetrics returns pod and container level metrics from kubelet summary.
 func (sp *SummaryProvider) getPodMetrics(summary *stats.Summary) ([]*stores.RawContainerInsightsMetric, error) {
-	// todo: This is not complete implementation of pod level metric collection since network level metrics are pending
-	// May need to add some more pod level labels for store decorators to work properly
 	var metrics []*stores.RawContainerInsightsMetric
 
 	if summary == nil {
