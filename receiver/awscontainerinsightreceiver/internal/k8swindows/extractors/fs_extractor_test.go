@@ -10,6 +10,7 @@ import (
 	"github.com/open-telemetry/opentelemetry-collector-contrib/internal/aws/containerinsight"
 	cExtractor "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/awscontainerinsightreceiver/internal/cadvisor/extractors"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/awscontainerinsightreceiver/internal/k8swindows/testutils"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/awscontainerinsightreceiver/internal/stores"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -23,7 +24,7 @@ func TestFSStats(t *testing.T) {
 	containerType := containerinsight.TypeNode
 	extractor := NewFileSystemMetricExtractor(nil)
 
-	var cMetrics []*cExtractor.CAdvisorMetric
+	var cMetrics []*stores.RawContainerInsightsMetric
 	if extractor.HasValue(nodeRawMetric) {
 		cMetrics = extractor.GetValue(nodeRawMetric, nil, containerType)
 	}

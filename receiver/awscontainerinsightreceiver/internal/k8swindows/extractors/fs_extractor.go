@@ -7,6 +7,7 @@ import (
 	ci "github.com/open-telemetry/opentelemetry-collector-contrib/internal/aws/containerinsight"
 	awsmetrics "github.com/open-telemetry/opentelemetry-collector-contrib/internal/aws/metrics"
 	cExtractor "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/awscontainerinsightreceiver/internal/cadvisor/extractors"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/awscontainerinsightreceiver/internal/stores"
 
 	"go.uber.org/zap"
 )
@@ -23,16 +24,16 @@ func (f *FileSystemMetricExtractor) HasValue(rawMetric RawMetric) bool {
 	return false
 }
 
-func (f *FileSystemMetricExtractor) GetValue(rawMetric RawMetric, _ cExtractor.CPUMemInfoProvider, containerType string) []*cExtractor.CAdvisorMetric {
+func (f *FileSystemMetricExtractor) GetValue(rawMetric RawMetric, _ cExtractor.CPUMemInfoProvider, containerType string) []*stores.RawContainerInsightsMetric {
 	if containerType == ci.TypePod {
 		return nil
 	}
 
 	containerType = getFSMetricType(containerType, f.logger)
-	metrics := make([]*cExtractor.CAdvisorMetric, 0, len(rawMetric.FileSystemStats))
+	metrics := make([]*stores.RawContainerInsightsMetric, 0, len(rawMetric.FileSystemStats))
 
 	for _, v := range rawMetric.FileSystemStats {
-		metric := cExtractor.NewCadvisorMetric(containerType, f.logger)
+		metric := stores.NewRawContainerInsightsMetric(containerType, f.logger)
 
 		metric.AddField(ci.MetricName(containerType, ci.FSUsage), v.UsedBytes)
 		metric.AddField(ci.MetricName(containerType, ci.FSCapacity), v.CapacityBytes)
