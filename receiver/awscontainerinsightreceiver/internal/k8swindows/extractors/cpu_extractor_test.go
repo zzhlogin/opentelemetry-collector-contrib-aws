@@ -19,8 +19,8 @@ func TestCPUStats(t *testing.T) {
 	result := testutils.LoadKubeletSummary(t, "./testdata/PreSingleKubeletSummary.json")
 	result2 := testutils.LoadKubeletSummary(t, "./testdata/CurSingleKubeletSummary.json")
 
-	podRawMetric := ConvertPodToRaw(&result.Pods[0])
-	podRawMetric2 := ConvertPodToRaw(&result2.Pods[0])
+	podRawMetric := ConvertPodToRaw(result.Pods[0])
+	podRawMetric2 := ConvertPodToRaw(result2.Pods[0])
 
 	// test container type
 	containerType := containerinsight.TypePod
@@ -42,8 +42,8 @@ func TestCPUStats(t *testing.T) {
 	containerType = containerinsight.TypeNode
 	extractor = NewCPUMetricExtractor(nil)
 
-	nodeRawMetric := ConvertNodeToRaw(&result.Node)
-	nodeRawMetric2 := ConvertNodeToRaw(&result2.Node)
+	nodeRawMetric := ConvertNodeToRaw(result.Node)
+	nodeRawMetric2 := ConvertNodeToRaw(result2.Node)
 	if extractor.HasValue(nodeRawMetric) {
 		cMetrics = extractor.GetValue(nodeRawMetric, MockCPUMemInfo, containerType)
 	}

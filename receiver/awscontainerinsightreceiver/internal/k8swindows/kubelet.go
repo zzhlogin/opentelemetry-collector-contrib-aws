@@ -72,9 +72,9 @@ func (k *kubeletSummaryProvider) getPodMetrics(summary *stats.Summary) ([]*store
 		tags[ci.AttributePodID] = pod.PodRef.UID
 		tags[ci.AttributeK8sPodName] = pod.PodRef.Name
 		tags[ci.AttributeK8sNamespace] = pod.PodRef.Namespace
-		tags[ci.Timestamp] = strconv.FormatInt(pod.CPU.Time.UnixNano(), 10)
 
-		rawMetric := extractors.ConvertPodToRaw(&pod)
+		rawMetric := extractors.ConvertPodToRaw(pod)
+		tags[ci.Timestamp] = strconv.FormatInt(rawMetric.Time.UnixNano(), 10)
 		for _, extractor := range GetMetricsExtractors() {
 			if extractor.HasValue(rawMetric) {
 				metrics = append(metrics, extractor.GetValue(rawMetric, &k.hostInfo, ci.TypePod)...)
