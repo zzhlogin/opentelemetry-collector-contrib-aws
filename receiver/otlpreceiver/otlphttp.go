@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"mime"
+	"log"
 	"net/http"
 
 	spb "google.golang.org/genproto/googleapis/rpc/status"
@@ -65,6 +66,7 @@ func handleMetrics(resp http.ResponseWriter, req *http.Request, metricsReceiver 
 		return
 	}
 
+	log.Printf("TEST body: %v", body)
 	otlpReq, err := enc.unmarshalMetricsRequest(body)
 	if err != nil {
 		writeError(resp, enc, err, http.StatusBadRequest)
