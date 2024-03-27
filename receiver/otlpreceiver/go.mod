@@ -6,16 +6,17 @@ require (
 	github.com/gogo/protobuf v1.3.2
 	github.com/klauspost/compress v1.17.7
 	github.com/stretchr/testify v1.9.0
-	go.opentelemetry.io/collector v0.89.0
-	go.opentelemetry.io/collector/component v0.89.0
-	go.opentelemetry.io/collector/config/configgrpc v0.89.0
-	go.opentelemetry.io/collector/config/confighttp v0.89.0
-	go.opentelemetry.io/collector/config/confignet v0.89.0
-	go.opentelemetry.io/collector/config/configtls v0.89.0
-	go.opentelemetry.io/collector/confmap v0.89.0
-	go.opentelemetry.io/collector/consumer v0.89.0
+	go.opentelemetry.io/collector v0.97.0
+	go.opentelemetry.io/collector/component v0.97.0
+	go.opentelemetry.io/collector/config/configgrpc v0.97.0
+	go.opentelemetry.io/collector/config/confighttp v0.97.0
+	go.opentelemetry.io/collector/config/confignet v0.97.0
+	go.opentelemetry.io/collector/config/configtls v0.97.0
+	go.opentelemetry.io/collector/confmap v0.97.0
+	go.opentelemetry.io/collector/consumer v0.97.0
 	go.opentelemetry.io/collector/pdata v1.4.0
-	go.opentelemetry.io/collector/receiver v0.89.0
+	go.opentelemetry.io/collector/receiver v0.97.0
+	go.opentelemetry.io/collector/receiver/otlpreceiver v0.97.0
 	go.opentelemetry.io/otel/metric v1.24.0
 	go.opentelemetry.io/otel/trace v1.24.0
 	go.uber.org/goleak v1.3.0
@@ -55,13 +56,13 @@ require (
 	github.com/prometheus/common v0.48.0 // indirect
 	github.com/prometheus/procfs v0.12.0 // indirect
 	github.com/rs/cors v1.10.1 // indirect
-	go.opentelemetry.io/collector/config/configauth v0.89.0 // indirect
+	go.opentelemetry.io/collector/config/configauth v0.97.0 // indirect
 	go.opentelemetry.io/collector/config/configcompression v1.4.0 // indirect
 	go.opentelemetry.io/collector/config/configopaque v1.4.0 // indirect
-	go.opentelemetry.io/collector/config/configtelemetry v0.89.0 // indirect
-	go.opentelemetry.io/collector/config/internal v0.89.0 // indirect
-	go.opentelemetry.io/collector/extension v0.89.0 // indirect
-	go.opentelemetry.io/collector/extension/auth v0.89.0 // indirect
+	go.opentelemetry.io/collector/config/configtelemetry v0.97.0 // indirect
+	go.opentelemetry.io/collector/config/internal v0.97.0 // indirect
+	go.opentelemetry.io/collector/extension v0.97.0 // indirect
+	go.opentelemetry.io/collector/extension/auth v0.97.0 // indirect
 	go.opentelemetry.io/collector/featuregate v1.4.0 // indirect
 	go.opentelemetry.io/contrib/config v0.4.0 // indirect
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.49.0 // indirect
@@ -82,42 +83,6 @@ require (
 	google.golang.org/genproto/googleapis/api v0.0.0-20240123012728-ef4313101c80 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
-
-replace go.opentelemetry.io/collector => ../../
-
-replace go.opentelemetry.io/collector/component => ../../component
-
-replace go.opentelemetry.io/collector/config/configauth => ../../config/configauth
-
-replace go.opentelemetry.io/collector/config/configcompression => ../../config/configcompression
-
-replace go.opentelemetry.io/collector/config/confighttp => ../../config/confighttp
-
-replace go.opentelemetry.io/collector/config/configgrpc => ../../config/configgrpc
-
-replace go.opentelemetry.io/collector/config/confignet => ../../config/confignet
-
-replace go.opentelemetry.io/collector/config/configopaque => ../../config/configopaque
-
-replace go.opentelemetry.io/collector/config/configtelemetry => ../../config/configtelemetry
-
-replace go.opentelemetry.io/collector/config/configtls => ../../config/configtls
-
-replace go.opentelemetry.io/collector/config/internal => ../../config/internal
-
-replace go.opentelemetry.io/collector/confmap => ../../confmap
-
-replace go.opentelemetry.io/collector/extension => ../../extension
-
-replace go.opentelemetry.io/collector/extension/auth => ../../extension/auth
-
-replace go.opentelemetry.io/collector/featuregate => ../../featuregate
-
-replace go.opentelemetry.io/collector/pdata => ../../pdata
-
-replace go.opentelemetry.io/collector/receiver => ../
-
-replace go.opentelemetry.io/collector/consumer => ../../consumer
 
 retract (
 	v0.76.0 // Depends on retracted pdata v1.0.0-rc10 module, use v0.76.1
