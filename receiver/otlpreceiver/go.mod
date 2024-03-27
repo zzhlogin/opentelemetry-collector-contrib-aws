@@ -1,4 +1,4 @@
-module go.opentelemetry.io/collector/receiver/otlpreceiver
+module github.com/amazon-contributing/opentelemetry-collector-contrib/receiver/otlpreceiver
 
 go 1.21
 
