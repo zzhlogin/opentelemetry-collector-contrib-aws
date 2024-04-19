@@ -22,7 +22,6 @@ EX_PKG=-not -path "./pkg/*"
 EX_CMD=-not -path "./cmd/*"
 EX_OVERRIDE=-not -path "./override/*"
 # Exclude patches from linting
-EX_PATCH=-not -path "./config/*"
 
 # NONROOT_MODS includes ./* dirs (excludes . dir)
 NONROOT_MODS := $(shell find . $(FIND_MOD_ARGS) -exec $(TO_MOD_DIR) )
@@ -38,9 +37,8 @@ INTERNAL_MODS := $(shell find ./internal/* $(FIND_MOD_ARGS) -exec $(TO_MOD_DIR) 
 PKG_MODS := $(shell find ./pkg/* $(FIND_MOD_ARGS) -exec $(TO_MOD_DIR) )
 CMD_MODS := $(shell find ./cmd/* $(FIND_MOD_ARGS) -exec $(TO_MOD_DIR) )
 OVERRIDE_MODS := $(shell find ./override/* $(FIND_MOD_ARGS) -exec $(TO_MOD_DIR) )
-PATCH_MODS := $(shell find ./config/* $(FIND_MOD_ARGS) -exec $(TO_MOD_DIR) )
-OTHER_MODS := $(shell find . $(EX_COMPONENTS) $(EX_INTERNAL) $(EX_PKG) $(EX_CMD) $(EX_OVERRIDE) $(EX_PATCH) $(FIND_MOD_ARGS) -exec $(TO_MOD_DIR) ) $(PWD)
-ALL_MODS := $(RECEIVER_MODS) $(PROCESSOR_MODS) $(EXPORTER_MODS) $(EXTENSION_MODS) $(CONNECTOR_MODS) $(INTERNAL_MODS) $(PKG_MODS) $(CMD_MODS) $(OVERRIDE_MODS) $(PATCH_MODS) $(OTHER_MODS)
+OTHER_MODS := $(shell find . $(EX_COMPONENTS) $(EX_INTERNAL) $(EX_PKG) $(EX_CMD) $(EX_OVERRIDE) $(FIND_MOD_ARGS) -exec $(TO_MOD_DIR) ) $(PWD)
+ALL_MODS := $(RECEIVER_MODS) $(PROCESSOR_MODS) $(EXPORTER_MODS) $(EXTENSION_MODS) $(CONNECTOR_MODS) $(INTERNAL_MODS) $(PKG_MODS) $(CMD_MODS) $(OVERRIDE_MODS) $(OTHER_MODS)
 
 # find -exec dirname cannot be used to process multiple matching patterns
 FIND_INTEGRATION_TEST_MODS={ find . -type f -name "*integration_test.go" & find . -type f -name "*e2e_test.go" -not -path "./testbed/*"; }
