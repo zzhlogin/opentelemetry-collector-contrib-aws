@@ -14,6 +14,8 @@ import (
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/aws/aws-sdk-go/service/ec2/ec2iface"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/open-telemetry/opentelemetry-collector-contrib/internal/metadataproviders/system"
 )
 
 type mockEC2Client struct {
@@ -34,11 +36,26 @@ func (m *mockEC2Client) DescribeInstances(*ec2.DescribeInstancesInput) (*ec2.Des
 	}, nil
 }
 
+type mockSystemProvider struct {
+	system.Provider
+	hostname    string
+	hostIP      string
+	errHostname error
+	errHostIP   error
+}
+
+func (m *mockSystemProvider) Hostname() (string, error) {
+	return m.hostname, m.errHostname
+}
+
+func (m *mockSystemProvider) HostIP() (string, error) {
+	return m.hostIP, m.errHostIP
+}
+
 func TestDescribeInstanceProvider(t *testing.T) {
-	t.Setenv(envHostname, "")
 	testErr := errors.New("test")
 	testCases := map[string]struct {
-		hostnameFn      func() (string, error)
+		systemProvider  system.Provider
 		reservations    []*ec2.Reservation
 		clientErr       error
 		wantHostname    string
@@ -47,8 +64,8 @@ func TestDescribeInstanceProvider(t *testing.T) {
 		wantGetErr      error
 	}{
 		"WithHostname/PrivateIP": {
-			hostnameFn: func() (string, error) {
-				return "ip-10-24-34-0.ec2.internal", nil
+			systemProvider: &mockSystemProvider{
+				hostname: "ip-10-24-34-0.ec2.internal",
 			},
 			reservations: []*ec2.Reservation{
 				{
@@ -78,8 +95,8 @@ func TestDescribeInstanceProvider(t *testing.T) {
 			wantHostname: "ip-10-24-34-0.ec2.internal",
 		},
 		"WithHostname/ResourceName": {
-			hostnameFn: func() (string, error) {
-				return "i-0123456789abcdef.us-west-2.compute.internal", nil
+			systemProvider: &mockSystemProvider{
+				hostname: "i-0123456789abcdef.us-west-2.compute.internal",
 			},
 			reservations: []*ec2.Reservation{
 				{
@@ -109,46 +126,108 @@ func TestDescribeInstanceProvider(t *testing.T) {
 			wantHostname: "i-0123456789abcdef.us-west-2.compute.internal",
 		},
 		"WithHostname/Unsupported": {
-			hostnameFn: func() (string, error) {
-				return "hello.us-east-1.amazon.com", nil
+			systemProvider: &mockSystemProvider{
+				hostname:  "hello.us-east-1.amazon.com",
+				errHostIP: testErr,
 			},
 			wantHostname: "hello.us-east-1.amazon.com",
 			wantGetErr:   errUnsupportedHostname,
 		},
 		"WithHostname/InvalidPrefix": {
-			hostnameFn: func() (string, error) {
-				return "other-prefix.us-west-2.compute.internal", nil
+			systemProvider: &mockSystemProvider{
+				hostname:  "invalid-prefix.us-west-2.compute.internal",
+				errHostIP: testErr,
 			},
-			wantHostname: "other-prefix.us-west-2.compute.internal",
+			wantHostname: "invalid-prefix.us-west-2.compute.internal",
 			wantGetErr:   errUnsupportedFilter,
 		},
 		"WithHostname/Error": {
-			hostnameFn: func() (string, error) {
-				return "", testErr
+			systemProvider: &mockSystemProvider{
+				errHostname: testErr,
+				errHostIP:   testErr,
 			},
 			wantHostname:    "",
 			wantHostnameErr: testErr,
 			wantGetErr:      testErr,
 		},
+		"WithHostIP/WithAZ": {
+			systemProvider: &mockSystemProvider{
+				hostname: "hello.us-east-1.amazon.com",
+				hostIP:   "10.24.34.0",
+			},
+			reservations: []*ec2.Reservation{
+				{
+					Instances: []*ec2.Instance{
+						{
+							ImageId:          aws.String("image-id"),
+							InstanceId:       aws.String("instance-id"),
+							InstanceType:     aws.String("instance-type"),
+							PrivateIpAddress: aws.String("10.24.34.0"),
+							Placement: &ec2.Placement{
+								AvailabilityZone: aws.String("us-east-1a"),
+							},
+						},
+					},
+					OwnerId: aws.String("owner-id"),
+				},
+			},
+			wantMetadata: &Metadata{
+				AccountID:        "owner-id",
+				AvailabilityZone: "us-east-1a",
+				ImageID:          "image-id",
+				InstanceID:       "instance-id",
+				InstanceType:     "instance-type",
+				PrivateIP:        "10.24.34.0",
+				Region:           "us-east-1",
+			},
+			wantHostname: "hello.us-east-1.amazon.com",
+		},
+		"WithHostIP/WithoutAZ": {
+			systemProvider: &mockSystemProvider{
+				hostname: "hello.us-east-1.amazon.com",
+				hostIP:   "10.24.34.0",
+			},
+			reservations: []*ec2.Reservation{
+				{
+					Instances: []*ec2.Instance{
+						{
+							ImageId:          aws.String("image-id"),
+							InstanceId:       aws.String("instance-id"),
+							InstanceType:     aws.String("instance-type"),
+							PrivateIpAddress: aws.String("10.24.34.0"),
+						},
+					},
+					OwnerId: aws.String("owner-id"),
+				},
+			},
+			wantMetadata: &Metadata{
+				AccountID:    "owner-id",
+				ImageID:      "image-id",
+				InstanceID:   "instance-id",
+				InstanceType: "instance-type",
+				PrivateIP:    "10.24.34.0",
+			},
+			wantHostname: "hello.us-east-1.amazon.com",
+		},
 		"WithClient/Error": {
-			hostnameFn: func() (string, error) {
-				return "i-0123456789abcdef.us-west-2.compute.internal", nil
+			systemProvider: &mockSystemProvider{
+				hostname: "i-0123456789abcdef.us-west-2.compute.internal",
 			},
 			clientErr:    testErr,
 			wantHostname: "i-0123456789abcdef.us-west-2.compute.internal",
 			wantGetErr:   testErr,
 		},
 		"WithClient/NoReservations": {
-			hostnameFn: func() (string, error) {
-				return "i-0123456789abcdef.us-west-2.compute.internal", nil
+			systemProvider: &mockSystemProvider{
+				hostname: "i-0123456789abcdef.us-west-2.compute.internal",
 			},
 			reservations: []*ec2.Reservation{},
 			wantHostname: "i-0123456789abcdef.us-west-2.compute.internal",
 			wantGetErr:   errReservationCount,
 		},
 		"WithClient/NoInstances": {
-			hostnameFn: func() (string, error) {
-				return "i-0123456789abcdef.us-west-2.compute.internal", nil
+			systemProvider: &mockSystemProvider{
+				hostname: "i-0123456789abcdef.us-west-2.compute.internal",
 			},
 			reservations: []*ec2.Reservation{
 				{OwnerId: aws.String("owner-id")},
@@ -169,7 +248,7 @@ func TestDescribeInstanceProvider(t *testing.T) {
 			p.newEC2Client = func(_ client.ConfigProvider, configs ...*aws.Config) ec2iface.EC2API {
 				return mockClient
 			}
-			p.osHostname = testCase.hostnameFn
+			p.systemProvider = testCase.systemProvider
 			hostname, err := p.Hostname(ctx)
 			assert.ErrorIs(t, err, testCase.wantHostnameErr)
 			assert.Equal(t, testCase.wantHostname, hostname)
