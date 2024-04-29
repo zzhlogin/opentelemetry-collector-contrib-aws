@@ -56,6 +56,11 @@ func (m *mockMetadata) HostArch() (string, error) {
 	return args.String(0), args.Error(1)
 }
 
+func (m *mockMetadata) HostIP() (string, error) {
+	args := m.MethodCalled("HostIP")
+	return args.String(0), args.Error(1)
+}
+
 func (m *mockMetadata) LookupCNAME() (string, error) {
 	args := m.MethodCalled("LookupCNAME")
 	return args.String(0), args.Error(1)
