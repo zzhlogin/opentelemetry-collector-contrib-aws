@@ -291,6 +291,7 @@ func NewAttrProc(settings *Settings) (*AttrProc, error) {
 
 // Process applies the AttrProc to an attribute map.
 func (ap *AttrProc) Process(ctx context.Context, logger *zap.Logger, attrs pcommon.Map) {
+	logger.Debug("actions to execute", zap.Any("actions", ap.actions))
 	for _, action := range ap.actions {
 		// TODO https://go.opentelemetry.io/collector/issues/296
 		// Do benchmark testing between having action be of type string vs integer.
@@ -299,6 +300,7 @@ func (ap *AttrProc) Process(ctx context.Context, logger *zap.Logger, attrs pcomm
 		switch action.Action {
 		case DELETE:
 			attrs.Remove(action.Key)
+			logger.Debug("Deleting attributes", zap.String("key", action.Key), zap.Any("attrs", attrs))
 
 			for _, k := range getMatchingKeys(action.Regex, attrs) {
 				attrs.Remove(k)
