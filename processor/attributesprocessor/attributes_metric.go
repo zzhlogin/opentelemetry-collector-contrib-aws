@@ -68,9 +68,11 @@ func (a *metricAttributesProcessor) processMetricAttributes(ctx context.Context,
 	// This is a lot of repeated code, but since there is no single parent superclass
 	// between metric data types, we can't use polymorphism.
 	//exhaustive:enforce
+	a.logger.Debug("metric type is", zap.Bool("gauge", m.Type() == pmetric.MetricTypeGauge))
 	switch m.Type() {
 	case pmetric.MetricTypeGauge:
 		dps := m.Gauge().DataPoints()
+		a.logger.Debug("gauge data points", zap.Int("count", dps.Len()))
 		for i := 0; i < dps.Len(); i++ {
 			a.attrProc.Process(ctx, a.logger, dps.At(i).Attributes())
 		}
