@@ -43,9 +43,9 @@ func (a *metricAttributesProcessor) processMetrics(ctx context.Context, md pmetr
 			metrics := ils.Metrics()
 			for k := 0; k < metrics.Len(); k++ {
 				m := metrics.At(k)
-				a.logger.Debug("Applying Metric Attributes", zap.Any("metric name", m.Name()), zap.Any("metric type", m.Type()))
+				a.logger.Info("Applying Metric Attributes", zap.Any("metric name", m.Name()), zap.Any("metric type", m.Type()))
 				if a.skipExpr != nil {
-					a.logger.Debug("Evaluating Metric Skip Expression", zap.Any("skipExpr", a.skipExpr))
+					a.logger.Info("Evaluating Metric Skip Expression", zap.Any("skipExpr", a.skipExpr))
 					skip, err := a.skipExpr.Eval(ctx, ottlmetric.NewTransformContext(m, metrics, scope, resource))
 					if err != nil {
 						return md, err
@@ -68,11 +68,11 @@ func (a *metricAttributesProcessor) processMetricAttributes(ctx context.Context,
 	// This is a lot of repeated code, but since there is no single parent superclass
 	// between metric data types, we can't use polymorphism.
 	//exhaustive:enforce
-	a.logger.Debug("metric type is", zap.Bool("gauge", m.Type() == pmetric.MetricTypeGauge))
+	a.logger.Info("metric type is", zap.Bool("gauge", m.Type() == pmetric.MetricTypeGauge))
 	switch m.Type() {
 	case pmetric.MetricTypeGauge:
 		dps := m.Gauge().DataPoints()
-		a.logger.Debug("gauge data points", zap.Int("count", dps.Len()))
+		a.logger.Info("gauge data points", zap.Int("count", dps.Len()))
 		for i := 0; i < dps.Len(); i++ {
 			a.attrProc.Process(ctx, a.logger, dps.At(i).Attributes())
 		}
