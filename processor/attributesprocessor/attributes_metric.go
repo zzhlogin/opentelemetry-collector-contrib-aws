@@ -43,7 +43,9 @@ func (a *metricAttributesProcessor) processMetrics(ctx context.Context, md pmetr
 			metrics := ils.Metrics()
 			for k := 0; k < metrics.Len(); k++ {
 				m := metrics.At(k)
+				a.logger.Debug("Applying Metric Attributes", zap.Any("metric name", m.Name()), zap.Any("metric type", m.Type()))
 				if a.skipExpr != nil {
+					a.logger.Debug("Evaluating Metric Skip Expression", zap.Any("skipExpr", a.skipExpr))
 					skip, err := a.skipExpr.Eval(ctx, ottlmetric.NewTransformContext(m, metrics, scope, resource))
 					if err != nil {
 						return md, err
