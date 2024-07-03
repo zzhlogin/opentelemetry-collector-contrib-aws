@@ -1205,7 +1205,6 @@ func validateLocalRootDependencySubsegment(t *testing.T, segment *awsxray.Segmen
 	assert.Equal(t, "POST", *segment.HTTP.Request.Method)
 	assert.Equal(t, 2, len(segment.Annotations))
 	assert.Nil(t, segment.Annotations[awsRemoteService])
-	assert.Equal(t, "myRemoteService", segment.Annotations[awsRemoteService])
 	assert.Nil(t, segment.Annotations[remoteTarget])
 	assert.Equal(t, "myAnnotationValue", segment.Annotations["myAnnotationKey"])
 
