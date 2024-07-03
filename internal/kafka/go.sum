@@ -89,8 +89,8 @@ github.com/xdg-go/stringprep v1.0.4/go.mod h1:mPGuuIYwz7CmR2bT9j4GbQqutWS1zV24gi
 github.com/yuin/goldmark v1.4.13/go.mod h1:6yULJ656Px+3vBD8DxQVa3kxgyrAnzto9xy5taEt/CY=
 go.opentelemetry.io/collector/config/configopaque v1.9.0 h1:jocenLdK/rVG9UoGlnpiBxXLXgH5NhIXCrVSTyKVYuA=
 go.opentelemetry.io/collector/config/configopaque v1.9.0/go.mod h1:8v1yaH4iYjcigbbyEaP/tzVXeFm4AaAsKBF9SBeqaG4=
-go.opentelemetry.io/collector/config/configtls v0.102.0 h1:U9xbye6bzsnQnJMCgYURyUcF1HGBGLb4+b3uIyxtmDE=
-go.opentelemetry.io/collector/config/configtls v0.102.0/go.mod h1:KHdrvo3cwosgDxclyiLWmtbovIwqvaIGeTXr3p5721A=
+go.opentelemetry.io/collector/config/configtls v0.102.1 h1:7fr+PU9BRg0HRc1Pn3WmDW/4WBHRjuo7o1CdG2vQKoA=
+go.opentelemetry.io/collector/config/configtls v0.102.1/go.mod h1:KHdrvo3cwosgDxclyiLWmtbovIwqvaIGeTXr3p5721A=
 go.opentelemetry.io/collector/confmap v0.102.0 h1:2mDkvQH3uCFb3PVsv8RRJX2PMbw3x4jV25wNticJEOU=
 go.opentelemetry.io/collector/confmap v0.102.0/go.mod h1:KgpS7UxH5rkd69CzAzlY2I1heH8Z7eNCZlHmwQBMxNg=
 go.uber.org/goleak v1.3.0 h1:2K3zAYmnTNqV73imy9J1T3WC+gmCePx2hEGkimedGto=
