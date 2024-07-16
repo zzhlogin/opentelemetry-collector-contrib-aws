@@ -4,7 +4,7 @@ module github.com/open-telemetry/opentelemetry-collector-contrib/cmd/otelcontrib
 
 go 1.22.0
 
-toolchain go1.22.2
+toolchain go1.22.5
 
 require (
 	github.com/open-telemetry/opentelemetry-collector-contrib/confmap/provider/s3provider v0.102.0
@@ -215,15 +215,15 @@ require (
 	go.opentelemetry.io/collector/confmap/provider/httpsprovider v0.102.1
 	go.opentelemetry.io/collector/confmap/provider/yamlprovider v0.102.1
 	go.opentelemetry.io/collector/connector v0.102.1
-	go.opentelemetry.io/collector/connector/forwardconnector v0.102.1
+	go.opentelemetry.io/collector/connector/forwardconnector v0.102.0
 	go.opentelemetry.io/collector/consumer v0.102.1
 	go.opentelemetry.io/collector/exporter v0.102.1
 	go.opentelemetry.io/collector/exporter/debugexporter v0.102.1
-	go.opentelemetry.io/collector/exporter/nopexporter v0.102.1
+	go.opentelemetry.io/collector/exporter/nopexporter v0.102.0
 	go.opentelemetry.io/collector/exporter/otlpexporter v0.102.1
-	go.opentelemetry.io/collector/exporter/otlphttpexporter v0.102.1
+	go.opentelemetry.io/collector/exporter/otlphttpexporter v0.102.0
 	go.opentelemetry.io/collector/extension v0.102.1
-	go.opentelemetry.io/collector/extension/ballastextension v0.102.1
+	go.opentelemetry.io/collector/extension/ballastextension v0.102.0
 	go.opentelemetry.io/collector/extension/zpagesextension v0.102.1
 	go.opentelemetry.io/collector/otelcol v0.102.1
 	go.opentelemetry.io/collector/pdata v1.9.0
@@ -231,7 +231,7 @@ require (
 	go.opentelemetry.io/collector/processor/batchprocessor v0.102.1
 	go.opentelemetry.io/collector/processor/memorylimiterprocessor v0.102.1
 	go.opentelemetry.io/collector/receiver v0.102.1
-	go.opentelemetry.io/collector/receiver/nopreceiver v0.102.1
+	go.opentelemetry.io/collector/receiver/nopreceiver v0.102.0
 	go.opentelemetry.io/collector/receiver/otlpreceiver v0.102.1
 	golang.org/x/sys v0.21.0
 )
@@ -797,7 +797,7 @@ require (
 	google.golang.org/genproto v0.0.0-20240513163218-0867130af1f8 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20240520151616-dc85e6b867a5 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20240521202816-d264139d666e // indirect
-	google.golang.org/grpc v1.64.0 // indirect
+	google.golang.org/grpc v1.64.1 // indirect
 	google.golang.org/protobuf v1.34.1 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
