@@ -1,10 +1,9 @@
 module github.com/open-telemetry/opentelemetry-collector-contrib
 
-go 1.22.0
-
-toolchain go1.22.2
+go 1.22.4
 
 require (
+	github.com/klauspost/compress v1.17.8
 	github.com/open-telemetry/opentelemetry-collector-contrib/connector/countconnector v0.102.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/connector/datadogconnector v0.102.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/connector/exceptionsconnector v0.102.0
@@ -169,9 +168,16 @@ require (
 	github.com/open-telemetry/opentelemetry-collector-contrib/receiver/windowsperfcountersreceiver v0.102.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/receiver/zipkinreceiver v0.102.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/receiver/zookeeperreceiver v0.102.0
+	github.com/stretchr/testify v1.9.0
+	go.opentelemetry.io/collector v0.102.1
 	go.opentelemetry.io/collector/component v0.102.1
+	go.opentelemetry.io/collector/config/configgrpc v0.102.1
+	go.opentelemetry.io/collector/config/confighttp v0.102.1
+	go.opentelemetry.io/collector/config/confignet v0.102.1
+	go.opentelemetry.io/collector/config/configtls v0.102.1
 	go.opentelemetry.io/collector/connector v0.102.1
 	go.opentelemetry.io/collector/connector/forwardconnector v0.102.1
+	go.opentelemetry.io/collector/consumer v0.102.1
 	go.opentelemetry.io/collector/exporter v0.102.1
 	go.opentelemetry.io/collector/exporter/debugexporter v0.102.1
 	go.opentelemetry.io/collector/exporter/loggingexporter v0.102.1
@@ -181,11 +187,16 @@ require (
 	go.opentelemetry.io/collector/extension/ballastextension v0.102.1
 	go.opentelemetry.io/collector/extension/zpagesextension v0.102.1
 	go.opentelemetry.io/collector/otelcol v0.102.1
+	go.opentelemetry.io/collector/pdata v1.5.0
+	go.opentelemetry.io/collector/pdata/testdata v0.102.1
 	go.opentelemetry.io/collector/processor v0.102.1
 	go.opentelemetry.io/collector/processor/batchprocessor v0.102.1
 	go.opentelemetry.io/collector/processor/memorylimiterprocessor v0.102.1
 	go.opentelemetry.io/collector/receiver v0.102.1
 	go.opentelemetry.io/collector/receiver/otlpreceiver v0.102.1
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20240401170217-c3f982113cda
+	google.golang.org/grpc v1.63.2
+	google.golang.org/protobuf v1.33.0
 )
 
 require (
@@ -511,7 +522,6 @@ require (
 	github.com/julienschmidt/httprouter v1.3.0 // indirect
 	github.com/kardianos/osext v0.0.0-20190222173326-2bc1f35cddc0 // indirect
 	github.com/karrick/godirwalk v1.17.0 // indirect
-	github.com/klauspost/compress v1.17.8 // indirect
 	github.com/klauspost/cpuid/v2 v2.2.5 // indirect
 	github.com/knadh/koanf/maps v0.1.1 // indirect
 	github.com/knadh/koanf/providers/confmap v0.1.0 // indirect
@@ -660,7 +670,6 @@ require (
 	github.com/spf13/viper v1.18.2 // indirect
 	github.com/stormcat24/protodep v0.1.8 // indirect
 	github.com/stretchr/objx v0.5.2 // indirect
-	github.com/stretchr/testify v1.9.0 // indirect
 	github.com/subosito/gotenv v1.6.0 // indirect
 	github.com/syndtr/gocapability v0.0.0-20200815063812-42c35b437635 // indirect
 	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common v1.0.931 // indirect
