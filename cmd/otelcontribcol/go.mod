@@ -215,15 +215,15 @@ require (
 	go.opentelemetry.io/collector/confmap/provider/httpsprovider v0.102.1
 	go.opentelemetry.io/collector/confmap/provider/yamlprovider v0.102.1
 	go.opentelemetry.io/collector/connector v0.102.1
-	go.opentelemetry.io/collector/connector/forwardconnector v0.102.0
+	go.opentelemetry.io/collector/connector/forwardconnector v0.102.1
 	go.opentelemetry.io/collector/consumer v0.102.1
 	go.opentelemetry.io/collector/exporter v0.102.1
 	go.opentelemetry.io/collector/exporter/debugexporter v0.102.1
 	go.opentelemetry.io/collector/exporter/nopexporter v0.102.0
 	go.opentelemetry.io/collector/exporter/otlpexporter v0.102.1
-	go.opentelemetry.io/collector/exporter/otlphttpexporter v0.102.0
+	go.opentelemetry.io/collector/exporter/otlphttpexporter v0.102.1
 	go.opentelemetry.io/collector/extension v0.102.1
-	go.opentelemetry.io/collector/extension/ballastextension v0.102.0
+	go.opentelemetry.io/collector/extension/ballastextension v0.102.1
 	go.opentelemetry.io/collector/extension/zpagesextension v0.102.1
 	go.opentelemetry.io/collector/otelcol v0.102.1
 	go.opentelemetry.io/collector/pdata v1.9.0
