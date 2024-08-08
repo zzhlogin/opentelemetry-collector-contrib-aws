@@ -27,8 +27,8 @@ const (
 	InitialValueDrop
 )
 
-func (i *InitialValue) String() string {
-	switch *i {
+func (i InitialValue) String() string {
+	switch i {
 	case InitialValueAuto:
 		return "auto"
 	case InitialValueKeep:
@@ -37,6 +37,10 @@ func (i *InitialValue) String() string {
 		return "drop"
 	}
 	return "unknown"
+}
+
+func (i InitialValue) MarshalText() (text []byte, err error) {
+	return []byte(i.String()), nil
 }
 
 func (i *InitialValue) UnmarshalText(text []byte) error {

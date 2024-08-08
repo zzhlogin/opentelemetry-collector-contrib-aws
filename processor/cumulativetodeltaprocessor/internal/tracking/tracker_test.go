@@ -342,3 +342,73 @@ func Test_metricTracker_sweeper(t *testing.T) {
 		t.Errorf("Sweeper did not terminate.")
 	}
 }
+
+func TestInitialValue_UnmarshalText(t *testing.T) {
+	tests := []struct {
+		str          string
+		initialValue InitialValue
+		err          bool
+	}{
+		{
+			str:          "auto",
+			initialValue: InitialValueAuto,
+		},
+		{
+			str:          "drop",
+			initialValue: InitialValueDrop,
+		},
+		{
+			str:          "keep",
+			initialValue: InitialValueKeep,
+		},
+		{
+			str: "unknown",
+			err: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.str, func(t *testing.T) {
+			var iv InitialValue
+			err := iv.UnmarshalText([]byte(tt.str))
+			if tt.err {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, tt.initialValue, iv)
+			}
+		})
+	}
+}
+
+func TestInitialValue_MarshalText(t *testing.T) {
+	tests := []struct {
+		str          string
+		initialValue InitialValue
+	}{
+		{
+			str:          "auto",
+			initialValue: InitialValueAuto,
+		},
+		{
+			str:          "drop",
+			initialValue: InitialValueDrop,
+		},
+		{
+			str:          "keep",
+			initialValue: InitialValueKeep,
+		},
+		{
+			str:          "unknown",
+			initialValue: InitialValue(-1),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.str, func(t *testing.T) {
+			assert.Equal(t, tt.str, tt.initialValue.String())
+			got, err := tt.initialValue.MarshalText()
+			assert.NoError(t, err)
+			assert.Equal(t, tt.str, string(got))
+		})
+	}
+}
