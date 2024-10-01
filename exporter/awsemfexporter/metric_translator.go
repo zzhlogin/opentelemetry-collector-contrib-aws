@@ -36,26 +36,35 @@ const (
 	fieldPrometheusMetricType = "prom_metric_type"
 
 	// Entity fields
-	keyAttributeEntityServiceName           = "aws.entity.service.name"
+	AWSEntityPrefix                         = "com.amazonaws.cloudwatch.entity.internal."
+	keyAttributeEntityServiceName           = AWSEntityPrefix + "service.name"
 	serviceName                             = "Name"
-	keyAttributeEntityDeploymentEnvironment = "aws.entity.deployment.environment"
+	keyAttributeEntityDeploymentEnvironment = AWSEntityPrefix + "deployment.environment"
 	deploymentEnvironment                   = "Environment"
-	keyAttributeEntityType                  = "aws.entity.type"
+	keyAttributeEntityType                  = AWSEntityPrefix + "type"
 	entityType                              = "Type"
 	service                                 = "Service"
 	resource                                = "Resource"
-	keyAttributeEntityResourceType          = "aws.entity.resource.type"
+	keyAttributeEntityResourceType          = AWSEntityPrefix + "resource.type"
 	resourceType                            = "ResourceType"
-	keyAttributeEntityIdentifier            = "aws.entity.resource.identifier"
+	keyAttributeEntityIdentifier            = AWSEntityPrefix + "resource.identifier"
 	identifier                              = "Identifier"
-	attributeEntityCluster                  = "aws.entity.k8s.cluster.name"
+	attributeEntityCluster                  = AWSEntityPrefix + "k8s.cluster.name"
 	cluster                                 = "Cluster"
-	attributeEntityNamespace                = "aws.entity.k8s.namespace.name"
+	attributeEntityNamespace                = AWSEntityPrefix + "k8s.namespace.name"
 	namespace                               = "Namespace"
-	attributeEntityWorkload                 = "aws.entity.k8s.workload.name"
+	attributeEntityWorkload                 = AWSEntityPrefix + "k8s.workload.name"
 	workload                                = "Workload"
-	attributeEntityNode                     = "aws.entity.k8s.node.name"
+	attributeEntityNode                     = AWSEntityPrefix + "k8s.node.name"
 	node                                    = "Node"
+	keyAttributeEntityServiceNameSource     = AWSEntityPrefix + "service.name.source"
+	source                                  = "Source"
+	attributeEntityPlatformType             = AWSEntityPrefix + "platform.type"
+	platform                                = "Platform"
+	attributeEntityInstanceID               = AWSEntityPrefix + "instance.id"
+	instance                                = "InstanceID"
+	attributeEntityAutoScalingGroup         = AWSEntityPrefix + "auto.scaling.group"
+	autoScalingGroup                        = "AutoScalingGroup"
 )
 
 var keyAttributeEntityToShortNameMap = map[string]string{
@@ -64,14 +73,17 @@ var keyAttributeEntityToShortNameMap = map[string]string{
 	keyAttributeEntityIdentifier:            identifier,
 	keyAttributeEntityServiceName:           serviceName,
 	keyAttributeEntityDeploymentEnvironment: deploymentEnvironment,
+	keyAttributeEntityServiceNameSource:     source,
+	attributeEntityPlatformType:             platform,
 }
 
 var attributeEntityToShortNameMap = map[string]string{
-	attributeEntityCluster:   cluster,
-	attributeEntityNamespace: namespace,
-	attributeEntityWorkload:  workload,
-	attributeEntityNode:      node,
-	// TODO: add attributes for EC2
+	attributeEntityCluster:          cluster,
+	attributeEntityNamespace:        namespace,
+	attributeEntityWorkload:         workload,
+	attributeEntityNode:             node,
+	attributeEntityInstanceID:       instance,
+	attributeEntityAutoScalingGroup: autoScalingGroup,
 }
 
 var errMissingMetricsForEnhancedContainerInsights = errors.New("nil event detected with EnhancedContainerInsights enabled")
