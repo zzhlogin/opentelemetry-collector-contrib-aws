@@ -85,9 +85,10 @@ var logStreamName = "logStream"
 
 var entity = cloudwatchlogs.Entity{
 	KeyAttributes: map[string]*string{
-		"Type":        aws.String("Service"),
-		"Name":        aws.String("myService"),
-		"Environment": aws.String("myEnvironment"),
+		"Type":         aws.String("Service"),
+		"Name":         aws.String("myService"),
+		"Environment":  aws.String("myEnvironment"),
+		"AwsAccountId": aws.String("0123456789012"),
 	},
 	Attributes: map[string]*string{
 		"Instance": aws.String("i-1234567"),
