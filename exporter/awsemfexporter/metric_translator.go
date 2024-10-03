@@ -48,7 +48,9 @@ const (
 	keyAttributeEntityResourceType          = AWSEntityPrefix + "resource.type"
 	resourceType                            = "ResourceType"
 	keyAttributeEntityIdentifier            = AWSEntityPrefix + "resource.identifier"
+	keyAttributeEntityAwsAccountId          = AWSEntityPrefix + "aws.account.id"
 	identifier                              = "Identifier"
+	awsAccountId                            = "AwsAccountId"
 	attributeEntityCluster                  = AWSEntityPrefix + "k8s.cluster.name"
 	cluster                                 = "Cluster"
 	attributeEntityNamespace                = AWSEntityPrefix + "k8s.namespace.name"
@@ -71,6 +73,7 @@ var keyAttributeEntityToShortNameMap = map[string]string{
 	keyAttributeEntityType:                  entityType,
 	keyAttributeEntityResourceType:          resourceType,
 	keyAttributeEntityIdentifier:            identifier,
+	keyAttributeEntityAwsAccountId:          awsAccountId,
 	keyAttributeEntityServiceName:           serviceName,
 	keyAttributeEntityDeploymentEnvironment: deploymentEnvironment,
 	keyAttributeEntityServiceNameSource:     source,

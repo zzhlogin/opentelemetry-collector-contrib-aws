@@ -382,6 +382,7 @@ func TestProcessAttributes(t *testing.T) {
 			resourceAttributes: map[string]any{
 				keyAttributeEntityServiceName:           "my-service",
 				keyAttributeEntityDeploymentEnvironment: "my-environment",
+				keyAttributeEntityAwsAccountId:          "0123456789012",
 			},
 			wantedAttributes: map[string]*string{
 				serviceName:           aws.String("my-service"),
@@ -412,6 +413,7 @@ func TestProcessAttributes(t *testing.T) {
 			resourceAttributes: map[string]any{
 				keyAttributeEntityServiceName:           "my-service",
 				keyAttributeEntityDeploymentEnvironment: "my-environment",
+				keyAttributeEntityAwsAccountId:          "0123456789012",
 				attributeEntityCluster:                  "my-cluster",
 				attributeEntityNamespace:                "my-namespace",
 				attributeEntityNode:                     "my-node",
@@ -420,6 +422,7 @@ func TestProcessAttributes(t *testing.T) {
 			wantedAttributes: map[string]*string{
 				serviceName:           aws.String("my-service"),
 				deploymentEnvironment: aws.String("my-environment"),
+				awsAccountId:          aws.String("0123456789012"),
 				cluster:               aws.String("my-cluster"),
 				namespace:             aws.String("my-namespace"),
 				node:                  aws.String("my-node"),
@@ -434,6 +437,7 @@ func TestProcessAttributes(t *testing.T) {
 				"extra_attribute":                       "extra_value",
 				keyAttributeEntityServiceName:           "my-service",
 				keyAttributeEntityDeploymentEnvironment: "my-environment",
+				keyAttributeEntityAwsAccountId:          "0123456789012",
 				attributeEntityCluster:                  "my-cluster",
 				attributeEntityNamespace:                "my-namespace",
 				attributeEntityNode:                     "my-node",
@@ -442,6 +446,7 @@ func TestProcessAttributes(t *testing.T) {
 			wantedAttributes: map[string]*string{
 				serviceName:           aws.String("my-service"),
 				deploymentEnvironment: aws.String("my-environment"),
+				awsAccountId:          aws.String("0123456789012"),
 				cluster:               aws.String("my-cluster"),
 				namespace:             aws.String("my-namespace"),
 				node:                  aws.String("my-node"),
