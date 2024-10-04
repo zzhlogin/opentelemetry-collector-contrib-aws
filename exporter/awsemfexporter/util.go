@@ -188,9 +188,6 @@ func processEntityAttributes(entityMap map[string]string, targetMap map[string]*
 // removeEntityAttributes so that it is not tagged as a dimension, and reduces the size of the PLE payload.
 func removeEntityAttributes(mutableResourceAttributes pcommon.Map) {
 	mutableResourceAttributes.RemoveIf(func(s string, _ pcommon.Value) bool {
-		if strings.HasPrefix(s, AWSEntityPrefix) {
-			return true
-		}
-		return false
+		return strings.HasPrefix(s, AWSEntityPrefix)
 	})
 }
