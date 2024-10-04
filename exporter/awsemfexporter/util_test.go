@@ -368,7 +368,7 @@ func TestGetLogInfo(t *testing.T) {
 
 }
 
-func TestProcessAttributes(t *testing.T) {
+func TestProcessAndRemoveEntityAttributes(t *testing.T) {
 	testCases := []struct {
 		name               string
 		entityMap          []map[string]string
@@ -382,11 +382,12 @@ func TestProcessAttributes(t *testing.T) {
 			resourceAttributes: map[string]any{
 				keyAttributeEntityServiceName:           "my-service",
 				keyAttributeEntityDeploymentEnvironment: "my-environment",
-				keyAttributeEntityAwsAccountId:          "0123456789012",
+				keyAttributeEntityAwsAccountID:          "0123456789012",
 			},
 			wantedAttributes: map[string]*string{
 				serviceName:           aws.String("my-service"),
 				deploymentEnvironment: aws.String("my-environment"),
+				awsAccountID:          aws.String("0123456789012"),
 			},
 			leftoverAttributes: make(map[string]any),
 		},
@@ -413,7 +414,7 @@ func TestProcessAttributes(t *testing.T) {
 			resourceAttributes: map[string]any{
 				keyAttributeEntityServiceName:           "my-service",
 				keyAttributeEntityDeploymentEnvironment: "my-environment",
-				keyAttributeEntityAwsAccountId:          "0123456789012",
+				keyAttributeEntityAwsAccountID:          "0123456789012",
 				attributeEntityCluster:                  "my-cluster",
 				attributeEntityNamespace:                "my-namespace",
 				attributeEntityNode:                     "my-node",
@@ -422,7 +423,7 @@ func TestProcessAttributes(t *testing.T) {
 			wantedAttributes: map[string]*string{
 				serviceName:           aws.String("my-service"),
 				deploymentEnvironment: aws.String("my-environment"),
-				awsAccountId:          aws.String("0123456789012"),
+				awsAccountID:          aws.String("0123456789012"),
 				cluster:               aws.String("my-cluster"),
 				namespace:             aws.String("my-namespace"),
 				node:                  aws.String("my-node"),
@@ -437,7 +438,7 @@ func TestProcessAttributes(t *testing.T) {
 				"extra_attribute":                       "extra_value",
 				keyAttributeEntityServiceName:           "my-service",
 				keyAttributeEntityDeploymentEnvironment: "my-environment",
-				keyAttributeEntityAwsAccountId:          "0123456789012",
+				keyAttributeEntityAwsAccountID:          "0123456789012",
 				attributeEntityCluster:                  "my-cluster",
 				attributeEntityNamespace:                "my-namespace",
 				attributeEntityNode:                     "my-node",
@@ -446,7 +447,7 @@ func TestProcessAttributes(t *testing.T) {
 			wantedAttributes: map[string]*string{
 				serviceName:           aws.String("my-service"),
 				deploymentEnvironment: aws.String("my-environment"),
-				awsAccountId:          aws.String("0123456789012"),
+				awsAccountID:          aws.String("0123456789012"),
 				cluster:               aws.String("my-cluster"),
 				namespace:             aws.String("my-namespace"),
 				node:                  aws.String("my-node"),
@@ -455,6 +456,28 @@ func TestProcessAttributes(t *testing.T) {
 			leftoverAttributes: map[string]any{
 				"extra_attribute": "extra_value",
 			},
+		},
+		{
+			name:      "key_and_non_key_attributes_plus_unsupported_entity_field",
+			entityMap: []map[string]string{keyAttributeEntityToShortNameMap, attributeEntityToShortNameMap},
+			resourceAttributes: map[string]any{
+				AWSEntityPrefix + "not.real.values":     "unsupported",
+				keyAttributeEntityServiceName:           "my-service",
+				keyAttributeEntityDeploymentEnvironment: "my-environment",
+				attributeEntityCluster:                  "my-cluster",
+				attributeEntityNamespace:                "my-namespace",
+				attributeEntityNode:                     "my-node",
+				attributeEntityWorkload:                 "my-workload",
+			},
+			wantedAttributes: map[string]*string{
+				serviceName:           aws.String("my-service"),
+				deploymentEnvironment: aws.String("my-environment"),
+				cluster:               aws.String("my-cluster"),
+				namespace:             aws.String("my-namespace"),
+				node:                  aws.String("my-node"),
+				workload:              aws.String("my-workload"),
+			},
+			leftoverAttributes: map[string]any{},
 		},
 	}
 
@@ -465,8 +488,9 @@ func TestProcessAttributes(t *testing.T) {
 			assert.Nil(t, err)
 			targetMap := make(map[string]*string)
 			for _, entityMap := range tc.entityMap {
-				processAttributes(entityMap, targetMap, attrs)
+				processEntityAttributes(entityMap, targetMap, attrs)
 			}
+			removeEntityAttributes(attrs)
 			assert.Equal(t, tc.leftoverAttributes, attrs.AsRaw())
 			assert.Equal(t, tc.wantedAttributes, targetMap)
 		})

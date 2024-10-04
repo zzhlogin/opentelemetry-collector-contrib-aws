@@ -2582,16 +2582,17 @@ func TestFetchEntityFields(t *testing.T) {
 	resourceMetrics.Resource().Attributes().PutStr(keyAttributeEntityType, "Service")
 	resourceMetrics.Resource().Attributes().PutStr(keyAttributeEntityDeploymentEnvironment, "my-environment")
 	resourceMetrics.Resource().Attributes().PutStr(keyAttributeEntityServiceName, "my-service")
-	resourceMetrics.Resource().Attributes().PutStr(keyAttributeEntityAwsAccountId, "0123456789012")
+	resourceMetrics.Resource().Attributes().PutStr(keyAttributeEntityAwsAccountID, "0123456789012")
 	resourceMetrics.Resource().Attributes().PutStr(attributeEntityNode, "my-node")
 	resourceMetrics.Resource().Attributes().PutStr(attributeEntityCluster, "my-cluster")
 	resourceMetrics.Resource().Attributes().PutStr(attributeEntityNamespace, "my-namespace")
 	resourceMetrics.Resource().Attributes().PutStr(attributeEntityWorkload, "my-workload")
+	resourceMetrics.Resource().Attributes().PutStr(AWSEntityPrefix+"fake_value", "go_terps")
 
 	expectedEntity := cloudwatchlogs.Entity{KeyAttributes: map[string]*string{
 		entityType:            aws.String(service),
 		serviceName:           aws.String("my-service"),
-		awsAccountId:          aws.String("0123456789012"),
+		awsAccountID:          aws.String("0123456789012"),
 		deploymentEnvironment: aws.String("my-environment"),
 	},
 		Attributes: map[string]*string{
@@ -2603,6 +2604,7 @@ func TestFetchEntityFields(t *testing.T) {
 	}
 	entity := fetchEntityFields(resourceMetrics.Resource().Attributes())
 	assert.Equal(t, expectedEntity, entity)
+	assert.Equal(t, 0, resourceMetrics.Resource().Attributes().Len())
 }
 
 func generateTestMetrics(tm testMetric) pmetric.Metrics {
