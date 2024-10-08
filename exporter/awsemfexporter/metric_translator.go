@@ -48,9 +48,9 @@ const (
 	keyAttributeEntityResourceType          = AWSEntityPrefix + "resource.type"
 	resourceType                            = "ResourceType"
 	keyAttributeEntityIdentifier            = AWSEntityPrefix + "resource.identifier"
-	keyAttributeEntityAwsAccountId          = AWSEntityPrefix + "aws.account.id"
+	keyAttributeEntityAwsAccountID          = AWSEntityPrefix + "aws.account.id"
 	identifier                              = "Identifier"
-	awsAccountId                            = "AwsAccountId"
+	awsAccountID                            = "AwsAccountId"
 	attributeEntityCluster                  = AWSEntityPrefix + "k8s.cluster.name"
 	cluster                                 = "Cluster"
 	attributeEntityNamespace                = AWSEntityPrefix + "k8s.namespace.name"
@@ -73,7 +73,7 @@ var keyAttributeEntityToShortNameMap = map[string]string{
 	keyAttributeEntityType:                  entityType,
 	keyAttributeEntityResourceType:          resourceType,
 	keyAttributeEntityIdentifier:            identifier,
-	keyAttributeEntityAwsAccountId:          awsAccountId,
+	keyAttributeEntityAwsAccountID:          awsAccountID,
 	keyAttributeEntityServiceName:           serviceName,
 	keyAttributeEntityDeploymentEnvironment: deploymentEnvironment,
 	keyAttributeEntityServiceNameSource:     source,
@@ -236,8 +236,9 @@ func fetchEntityFields(resourceAttributes pcommon.Map) cloudwatchlogs.Entity {
 	keyAttributesMap := map[string]*string{}
 	attributeMap := map[string]*string{}
 
-	processAttributes(keyAttributeEntityToShortNameMap, keyAttributesMap, resourceAttributes)
-	processAttributes(attributeEntityToShortNameMap, attributeMap, resourceAttributes)
+	processEntityAttributes(keyAttributeEntityToShortNameMap, keyAttributesMap, resourceAttributes)
+	processEntityAttributes(attributeEntityToShortNameMap, attributeMap, resourceAttributes)
+	removeEntityAttributes(resourceAttributes)
 
 	return cloudwatchlogs.Entity{
 		KeyAttributes: keyAttributesMap,
