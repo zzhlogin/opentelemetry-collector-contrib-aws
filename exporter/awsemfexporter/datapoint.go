@@ -41,6 +41,14 @@ func calculateSummaryDelta(prev *aws.MetricValue, val any, _ time.Time) (any, bo
 	return summaryMetricEntry{summaryDelta, countDelta}, true
 }
 
+func sum(array []float64) float64 {
+	total := 0.0
+	for _, value := range array {
+		total += value
+	}
+	return total
+}
+
 // dataPoint represents a processed metric data point
 type dataPoint struct {
 	name        string
@@ -60,7 +68,7 @@ type dataPoints interface {
 	// dataPoint: the adjusted data point
 	// retained: indicates whether the data point is valid for further process
 	// NOTE: It is an expensive call as it calculates the metric value.
-	CalculateDeltaDatapoints(i int, instrumentationScopeName string, detailedMetrics bool, calculators *emfCalculators) (dataPoint []dataPoint, retained bool)
+	CalculateDeltaDatapoints(i int, instrumentationScopeName string, detailedMetrics bool, calculators *emfCalculators, logger *zap.Logger) (dataPoint []dataPoint, retained bool)
 	// IsStaleNaNInf returns true if metric value has NoRecordedValue flag set or if any metric value contains a NaN or Inf.
 	// When return value is true, IsStaleNaNInf also returns the attributes attached to the metric which can be used for
 	// logging purposes.
@@ -106,7 +114,7 @@ type summaryMetricEntry struct {
 }
 
 // CalculateDeltaDatapoints retrieves the NumberDataPoint at the given index and performs rate/delta calculation if necessary.
-func (dps numberDataPointSlice) CalculateDeltaDatapoints(i int, _ string, _ bool, calculators *emfCalculators) ([]dataPoint, bool) {
+func (dps numberDataPointSlice) CalculateDeltaDatapoints(i int, _ string, _ bool, calculators *emfCalculators, logger *zap.Logger) ([]dataPoint, bool) {
 	metric := dps.NumberDataPointSlice.At(i)
 	labels := createLabels(metric.Attributes())
 	timestampMs := unixNanoToMilliseconds(metric.Timestamp())
@@ -157,7 +165,7 @@ func (dps numberDataPointSlice) IsStaleNaNInf(i int) (bool, pcommon.Map) {
 }
 
 // CalculateDeltaDatapoints retrieves the HistogramDataPoint at the given index.
-func (dps histogramDataPointSlice) CalculateDeltaDatapoints(i int, _ string, _ bool, calculators *emfCalculators) ([]dataPoint, bool) {
+func (dps histogramDataPointSlice) CalculateDeltaDatapoints(i int, _ string, _ bool, calculators *emfCalculators, logger *zap.Logger) ([]dataPoint, bool) {
 	metric := dps.HistogramDataPointSlice.At(i)
 	labels := createLabels(metric.Attributes())
 	timestamp := unixNanoToMilliseconds(metric.Timestamp())
@@ -213,15 +221,46 @@ func (dps histogramDataPointSlice) IsStaleNaNInf(i int) (bool, pcommon.Map) {
 }
 
 // CalculateDeltaDatapoints retrieves the ExponentialHistogramDataPoint at the given index.
-func (dps exponentialHistogramDataPointSlice) CalculateDeltaDatapoints(idx int, _ string, _ bool, _ *emfCalculators) ([]dataPoint, bool) {
+// The exponential histogram metric are split into two data points based on bucket counts.
+// If the total buckets exceed 100, the second data point contains the last 100 buckets, while the first data point includes the remaining buckets.
+// Re-calculated Min, Max, Sum, Count for each split:
+// 1. First split datapoint:
+//   - Min: From original metric.
+//   - Max: Last bucket’s bucketEnd in the first split.
+//   - Sum: 0.
+//   - Count: Calculated from the first split buckets.
+//
+// 2. Second split datapoint:
+//   - Min: First bucket’s bucketBegin in the second split.
+//   - Max: From original metric.
+//   - Sum: From original metric.
+//   - Count: Based on second split buckets.
+func (dps exponentialHistogramDataPointSlice) CalculateDeltaDatapoints(idx int, _ string, _ bool, _ *emfCalculators, logger *zap.Logger) ([]dataPoint, bool) {
 	metric := dps.ExponentialHistogramDataPointSlice.At(idx)
 
 	scale := metric.Scale()
 	base := math.Pow(2, math.Pow(2, float64(-scale)))
-	arrayValues := []float64{}
-	arrayCounts := []float64{}
 	var bucketBegin float64
 	var bucketEnd float64
+	firstDataPointCount := 0
+	firstDataPointMin := metric.Min()
+	firstDataPointArrayValues := []float64{}
+	firstDataPointArrayCounts := []float64{}
+	secondDataPointMax := metric.Max()
+	secondDataPointArrayValues := []float64{}
+	secondDataPointArrayCounts := []float64{}
+	totalBucketLen := metric.Positive().BucketCounts().Len() + metric.Negative().BucketCounts().Len()
+	if metric.ZeroCount() > 0 {
+		totalBucketLen++
+	}
+	logger.Debug("metric.Positive().BucketCounts().Len()", zap.Int("metric.Positive().BucketCounts().Len()", metric.Positive().BucketCounts().Len()))
+	logger.Debug("metric.Negative().BucketCounts().Len()", zap.Int("metric.Negative().BucketCounts().Len()", metric.Negative().BucketCounts().Len()))
+	logger.Debug("totalBucketLen", zap.Int("totalBucketLen", totalBucketLen))
+	currentLength := 0
+	firstDataPointLength := totalBucketLen - 100
+	if firstDataPointLength < 0 {
+		firstDataPointLength = 0
+	}
 
 	// Set mid-point of positive buckets in values/counts array.
 	positiveBuckets := metric.Positive()
@@ -229,26 +268,51 @@ func (dps exponentialHistogramDataPointSlice) CalculateDeltaDatapoints(idx int, 
 	positiveBucketCounts := positiveBuckets.BucketCounts()
 	bucketBegin = 0
 	bucketEnd = 0
-	for i := 0; i < positiveBucketCounts.Len(); i++ {
+	for i := positiveBucketCounts.Len() - 1; i >= 0; i-- {
+		logger.Debug("positiveBucketCountsNo", zap.Int("positiveBucketCountsNo", i))
 		index := i + int(positiveOffset)
-		if bucketBegin == 0 {
-			bucketBegin = math.Pow(base, float64(index))
+		if bucketEnd == 0 {
+			bucketEnd = math.Pow(base, float64(index+1))
 		} else {
-			bucketBegin = bucketEnd
+			bucketEnd = bucketBegin
 		}
-		bucketEnd = math.Pow(base, float64(index+1))
+		bucketBegin = math.Pow(base, float64(index))
 		metricVal := (bucketBegin + bucketEnd) / 2
 		count := positiveBucketCounts.At(i)
-		if count > 0 {
-			arrayValues = append(arrayValues, metricVal)
-			arrayCounts = append(arrayCounts, float64(count))
+		if count > 0 && currentLength < firstDataPointLength {
+			firstDataPointArrayValues = append(firstDataPointArrayValues, metricVal)
+			firstDataPointArrayCounts = append(firstDataPointArrayCounts, float64(count))
+			firstDataPointCount += int(count)
+			currentLength++
+			if currentLength == firstDataPointLength {
+				firstDataPointMin = bucketBegin
+			}
+		} else if count > 0 {
+			if currentLength == firstDataPointLength && currentLength != 0 {
+				secondDataPointMax = bucketEnd
+			}
+			secondDataPointArrayValues = append(secondDataPointArrayValues, metricVal)
+			secondDataPointArrayCounts = append(secondDataPointArrayCounts, float64(count))
+			currentLength++
 		}
 	}
 
 	// Set count of zero bucket in values/counts array.
-	if metric.ZeroCount() > 0 {
-		arrayValues = append(arrayValues, 0)
-		arrayCounts = append(arrayCounts, float64(metric.ZeroCount()))
+	if metric.ZeroCount() > 0 && currentLength < firstDataPointLength {
+		firstDataPointArrayValues = append(firstDataPointArrayValues, 0)
+		firstDataPointArrayCounts = append(firstDataPointArrayCounts, float64(metric.ZeroCount()))
+		firstDataPointCount += int(metric.ZeroCount())
+		currentLength++
+		if currentLength == firstDataPointLength {
+			firstDataPointMin = 0
+		}
+	} else if metric.ZeroCount() > 0 {
+		if currentLength == firstDataPointLength && currentLength != 0 {
+			secondDataPointMax = 0
+		}
+		secondDataPointArrayValues = append(secondDataPointArrayValues, 0)
+		secondDataPointArrayCounts = append(secondDataPointArrayCounts, float64(metric.ZeroCount()))
+		currentLength++
 	}
 
 	// Set mid-point of negative buckets in values/counts array.
@@ -264,6 +328,7 @@ func (dps exponentialHistogramDataPointSlice) CalculateDeltaDatapoints(idx int, 
 	bucketBegin = 0
 	bucketEnd = 0
 	for i := 0; i < negativeBucketCounts.Len(); i++ {
+		logger.Debug("negativeBucketCountsNo", zap.Int("negativeBucketCountsNo", i))
 		index := i + int(negativeOffset)
 		if bucketEnd == 0 {
 			bucketEnd = -math.Pow(base, float64(index))
@@ -273,25 +338,75 @@ func (dps exponentialHistogramDataPointSlice) CalculateDeltaDatapoints(idx int, 
 		bucketBegin = -math.Pow(base, float64(index+1))
 		metricVal := (bucketBegin + bucketEnd) / 2
 		count := negativeBucketCounts.At(i)
-		if count > 0 {
-			arrayValues = append(arrayValues, metricVal)
-			arrayCounts = append(arrayCounts, float64(count))
+		if count > 0 && currentLength < firstDataPointLength {
+			firstDataPointArrayValues = append(firstDataPointArrayValues, metricVal)
+			firstDataPointArrayCounts = append(firstDataPointArrayCounts, float64(count))
+			firstDataPointCount += int(count)
+			currentLength++
+			if currentLength == firstDataPointLength {
+				firstDataPointMin = bucketEnd
+			}
+		} else if count > 0 {
+			if currentLength == firstDataPointLength && currentLength != 0 {
+				secondDataPointMax = bucketBegin
+			}
+			secondDataPointArrayValues = append(secondDataPointArrayValues, metricVal)
+			secondDataPointArrayCounts = append(secondDataPointArrayCounts, float64(count))
+			currentLength++
 		}
 	}
 
-	return []dataPoint{{
+	var datapoints []dataPoint
+	// Add second data point (last 100 elements or fewer)
+	datapoints = append(datapoints, dataPoint{
 		name: dps.metricName,
 		value: &cWMetricHistogram{
-			Values: arrayValues,
-			Counts: arrayCounts,
-			Count:  metric.Count(),
+			Values: secondDataPointArrayValues,
+			Counts: secondDataPointArrayCounts,
+			Count:  metric.Count() - uint64(firstDataPointCount),
 			Sum:    metric.Sum(),
-			Max:    metric.Max(),
+			Max:    secondDataPointMax,
 			Min:    metric.Min(),
 		},
 		labels:      createLabels(metric.Attributes()),
 		timestampMs: unixNanoToMilliseconds(metric.Timestamp()),
-	}}, true
+	})
+
+	// Data point gets the remaining elements
+	if firstDataPointCount > 0 {
+		logger.Debug("CalculateDeltaDatapoints: second data point Added",
+			zap.Int("arrayValues length", totalBucketLen),
+			zap.Int("first data point length", firstDataPointLength),
+			zap.Int("second data point length", totalBucketLen-firstDataPointLength),
+			zap.Int("original count", int(metric.Count())), // Convert uint64 to int
+			zap.Int("first data point count", firstDataPointCount),
+			zap.Float64("second data point count", float64(metric.Count()-uint64(firstDataPointCount))),
+		)
+		datapoints = append(datapoints, dataPoint{
+			name: dps.metricName,
+			value: &cWMetricHistogram{
+				Values: firstDataPointArrayValues,
+				Counts: firstDataPointArrayCounts,
+				Count:  uint64(firstDataPointCount),
+				Sum:    0,
+				Max:    metric.Max(),
+				Min:    firstDataPointMin,
+			},
+			labels:      createLabels(metric.Attributes()),
+			timestampMs: unixNanoToMilliseconds(metric.Timestamp()),
+		})
+	}
+
+	logger.Debug("CalculateDeltaDatapoints: exponentialHistogramDataPointSlice two datapoints length",
+		zap.Int("arrayValues length", totalBucketLen),
+		zap.Int("first data point length", firstDataPointLength),
+		zap.Int("second data point length", totalBucketLen-firstDataPointLength),
+		zap.Int("original count", int(metric.Count())), // Convert uint64 to int
+		zap.Int("first data point count", firstDataPointCount),
+		zap.Float64("second data point count", float64(metric.Count()-uint64(firstDataPointCount))), // Convert metric.Count() to float64
+	)
+
+	return datapoints, true
 }
 
 func (dps exponentialHistogramDataPointSlice) IsStaleNaNInf(i int) (bool, pcommon.Map) {
@@ -312,7 +427,7 @@ func (dps exponentialHistogramDataPointSlice) IsStaleNaNInf(i int) (bool, pcommo
 }
 
 // CalculateDeltaDatapoints retrieves the SummaryDataPoint at the given index and perform calculation with sum and count while retain the quantile value.
-func (dps summaryDataPointSlice) CalculateDeltaDatapoints(i int, _ string, detailedMetrics bool, calculators *emfCalculators) ([]dataPoint, bool) {
+func (dps summaryDataPointSlice) CalculateDeltaDatapoints(i int, _ string, detailedMetrics bool, calculators *emfCalculators, logger *zap.Logger) ([]dataPoint, bool) {
 	metric := dps.SummaryDataPointSlice.At(i)
 	labels := createLabels(metric.Attributes())
 	timestampMs := unixNanoToMilliseconds(metric.Timestamp())

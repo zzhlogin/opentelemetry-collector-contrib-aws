@@ -52,12 +52,14 @@ func addToGroupedMetric(
 			}
 			continue
 		}
-		dps, retained := dps.CalculateDeltaDatapoints(i, metadata.instrumentationScopeName, config.DetailedMetrics, calculators)
+		config.logger.Debug("Start CalculateDeltaDatapoints HERE !!!!!!: ")
+		dps, retained := dps.CalculateDeltaDatapoints(i, metadata.instrumentationScopeName, config.DetailedMetrics, calculators, config.logger)
+		config.logger.Debug("CalculateDeltaDatapoints dps len: ", zap.Any("dps len", len(dps)))
 		if !retained {
 			continue
 		}
 
-		for _, dp := range dps {
+		for i, dp := range dps {
 			labels := dp.labels
 
 			if metricType, ok := labels["Type"]; ok {
@@ -87,6 +89,10 @@ func addToGroupedMetric(
 			}
 
 			// Extra params to use when grouping metrics
+			metadata.groupedMetricMetadata.metricIndex = i
+			if i == 1 {
+				config.logger.Debug("found second metadata.metricIndex: ", zap.Any("metadata.metricIndex", metadata.groupedMetricMetadata.metricIndex), zap.Any("labels", labels))
+			}
 			groupKey := aws.NewKey(metadata.groupedMetricMetadata, labels)
 			if _, ok := groupedMetrics[groupKey]; ok {
 				// if MetricName already exists in metrics map, print warning log
