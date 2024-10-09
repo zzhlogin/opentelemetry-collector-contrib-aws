@@ -52,6 +52,7 @@ func addToGroupedMetric(
 			}
 			continue
 		}
+		config.logger.Debug("Start CalculateDeltaDatapoints HERE !!!!!!: ")
 		dps, retained := dps.CalculateDeltaDatapoints(i, metadata.instrumentationScopeName, config.DetailedMetrics, calculators)
 		if !retained {
 			continue
