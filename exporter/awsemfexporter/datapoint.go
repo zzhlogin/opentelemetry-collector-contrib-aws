@@ -41,6 +41,14 @@ func calculateSummaryDelta(prev *aws.MetricValue, val any, _ time.Time) (any, bo
 	return summaryMetricEntry{summaryDelta, countDelta}, true
 }
 
+func sum(array []float64) float64 {
+	total := 0.0
+	for _, value := range array {
+		total += value
+	}
+	return total
+}
+
 // dataPoint represents a processed metric data point
 type dataPoint struct {
 	name        string
@@ -306,7 +314,7 @@ func (dps exponentialHistogramDataPointSlice) CalculateDeltaDatapoints(idx int, 
 		value: &cWMetricHistogram{
 			Values: arrayValues[:firstDataPointLength],
 			Counts: arrayCounts[:firstDataPointLength],
-			Count:  firstDataPointCount,
+			Count:  uint64(firstDataPointCount),
 			Sum:    firstDataPointSum,
 			Max:    metric.Max(),
 			Min:    metric.Min(),
@@ -330,11 +338,18 @@ func (dps exponentialHistogramDataPointSlice) CalculateDeltaDatapoints(idx int, 
 		timestampMs: unixNanoToMilliseconds(metric.Timestamp()),
 	})
 
-	logger.Debug("CalculateDeltaDatapoints: exponentialHistogramDataPointSlice two datapoints length: ", len(arrayValues), " split into two data points: "+
-		" Orignal Length: ", len(arrayValues), " first data point length: ", firstDataPointLength, " second data point length: ", secondDataPointLength,
-		" Orignal Count: ", metric.Count(), " first data point count: ", firstDataPointCount, " second data point count: ", metric.Count()-firstDataPointCount,
-		" Orignal Sum: ", metric.Sum(), " first data point sum: ", firstDataPointSum, " second data point sum: ", metric.Sum()-firstDataPointSum,
-		" Offset: ", sum(arrayValues)-metric.Sum())
+	logger.Debug("CalculateDeltaDatapoints: exponentialHistogramDataPointSlice two datapoints length",
+		zap.Int("arrayValues length", len(arrayValues)),
+		zap.Int("first data point length", firstDataPointLength),
+		zap.Int("second data point length", secondDataPointLength),
+		zap.Int("original count", metric.Count()),
+		zap.Float64("first data point count", firstDataPointCount),
+		zap.Float64("second data point count", metric.Count()-firstDataPointCount),
+		zap.Float64("original sum", metric.Sum()),
+		zap.Float64("first data point sum", firstDataPointSum),
+		zap.Float64("second data point sum", metric.Sum()-firstDataPointSum),
+		zap.Float64("offset", sum(arrayValues)-metric.Sum()),
+	)
 
 	return datapoints, true
 }
