@@ -60,7 +60,7 @@ type dataPoints interface {
 	// dataPoint: the adjusted data point
 	// retained: indicates whether the data point is valid for further process
 	// NOTE: It is an expensive call as it calculates the metric value.
-	CalculateDeltaDatapoints(i int, instrumentationScopeName string, detailedMetrics bool, calculators *emfCalculators) (dataPoint []dataPoint, retained bool)
+	CalculateDeltaDatapoints(i int, instrumentationScopeName string, detailedMetrics bool, calculators *emfCalculators, logger *zap.Logger) (dataPoint []dataPoint, retained bool)
 	// IsStaleNaNInf returns true if metric value has NoRecordedValue flag set or if any metric value contains a NaN or Inf.
 	// When return value is true, IsStaleNaNInf also returns the attributes attached to the metric which can be used for
 	// logging purposes.
@@ -106,7 +106,7 @@ type summaryMetricEntry struct {
 }
 
 // CalculateDeltaDatapoints retrieves the NumberDataPoint at the given index and performs rate/delta calculation if necessary.
-func (dps numberDataPointSlice) CalculateDeltaDatapoints(i int, _ string, _ bool, calculators *emfCalculators) ([]dataPoint, bool) {
+func (dps numberDataPointSlice) CalculateDeltaDatapoints(i int, _ string, _ bool, calculators *emfCalculators, logger *zap.Logger) ([]dataPoint, bool) {
 	metric := dps.NumberDataPointSlice.At(i)
 	labels := createLabels(metric.Attributes())
 	timestampMs := unixNanoToMilliseconds(metric.Timestamp())
@@ -157,7 +157,7 @@ func (dps numberDataPointSlice) IsStaleNaNInf(i int) (bool, pcommon.Map) {
 }
 
 // CalculateDeltaDatapoints retrieves the HistogramDataPoint at the given index.
-func (dps histogramDataPointSlice) CalculateDeltaDatapoints(i int, _ string, _ bool, calculators *emfCalculators) ([]dataPoint, bool) {
+func (dps histogramDataPointSlice) CalculateDeltaDatapoints(i int, _ string, _ bool, calculators *emfCalculators, logger *zap.Logger) ([]dataPoint, bool) {
 	metric := dps.HistogramDataPointSlice.At(i)
 	labels := createLabels(metric.Attributes())
 	timestamp := unixNanoToMilliseconds(metric.Timestamp())
@@ -213,7 +213,7 @@ func (dps histogramDataPointSlice) IsStaleNaNInf(i int) (bool, pcommon.Map) {
 }
 
 // CalculateDeltaDatapoints retrieves the ExponentialHistogramDataPoint at the given index.
-func (dps exponentialHistogramDataPointSlice) CalculateDeltaDatapoints(idx int, _ string, _ bool, _ *emfCalculators) ([]dataPoint, bool) {
+func (dps exponentialHistogramDataPointSlice) CalculateDeltaDatapoints(idx int, _ string, _ bool, _ *emfCalculators, logger *zap.Logger) ([]dataPoint, bool) {
 	metric := dps.ExponentialHistogramDataPointSlice.At(idx)
 
 	scale := metric.Scale()
@@ -279,19 +279,64 @@ func (dps exponentialHistogramDataPointSlice) CalculateDeltaDatapoints(idx int, 
 		}
 	}
 
-	return []dataPoint{{
+	if len(arrayValues) <= 100 {
+		return []dataPoint{{
+			name: dps.metricName,
+			value: &cWMetricHistogram{
+				Values: arrayValues,
+				Counts: arrayCounts,
+				Count:  metric.Count(),
+				Sum:    metric.Sum(),
+				Max:    metric.Max(),
+				Min:    metric.Min(),
+			},
+			labels:      createLabels(metric.Attributes()),
+			timestampMs: unixNanoToMilliseconds(metric.Timestamp()),
+		}}, true
+	}
+
+	var datapoints []dataPoint
+	secondDataPointLength := 100
+	firstDataPointLength := len(arrayValues) - secondDataPointLength
+	firstDataPointCount := sum(arrayCounts[:firstDataPointLength])
+	firstDataPointSum := sum(arrayValues[:firstDataPointLength])
+	// First data point gets the remaining elements beyond the last 100 elements
+	datapoints = append(datapoints, dataPoint{
 		name: dps.metricName,
 		value: &cWMetricHistogram{
-			Values: arrayValues,
-			Counts: arrayCounts,
-			Count:  metric.Count(),
-			Sum:    metric.Sum(),
+			Values: arrayValues[:firstDataPointLength],
+			Counts: arrayCounts[:firstDataPointLength],
+			Count:  firstDataPointCount,
+			Sum:    firstDataPointSum,
 			Max:    metric.Max(),
 			Min:    metric.Min(),
 		},
 		labels:      createLabels(metric.Attributes()),
 		timestampMs: unixNanoToMilliseconds(metric.Timestamp()),
-	}}, true
+	})
+
+	// Second data point gets exactly the first 100 elements
+	datapoints = append(datapoints, dataPoint{
+		name: dps.metricName,
+		value: &cWMetricHistogram{
+			Values: arrayValues[firstDataPointLength:],
+			Counts: arrayCounts[firstDataPointLength:],
+			Count:  metric.Count() - firstDataPointCount,
+			Sum:    metric.Sum() - firstDataPointSum,
+			Max:    metric.Max(),
+			Min:    metric.Min(),
+		},
+		labels:      createLabels(metric.Attributes()),
+		timestampMs: unixNanoToMilliseconds(metric.Timestamp()),
+	})
+
+	logger.Debug("CalculateDeltaDatapoints: exponentialHistogramDataPointSlice two datapoints length: ", len(arrayValues), " split into two data points: "+
+		" Orignal Length: ", len(arrayValues), " first data point length: ", firstDataPointLength, " second data point length: ", secondDataPointLength,
+		" Orignal Count: ", metric.Count(), " first data point count: ", firstDataPointCount, " second data point count: ", metric.Count()-firstDataPointCount,
+		" Orignal Sum: ", metric.Sum(), " first data point sum: ", firstDataPointSum, " second data point sum: ", metric.Sum()-firstDataPointSum,
+		" Offset: ", sum(arrayValues)-metric.Sum())
+
+	return datapoints, true
 }
 
 func (dps exponentialHistogramDataPointSlice) IsStaleNaNInf(i int) (bool, pcommon.Map) {
@@ -312,7 +357,7 @@ func (dps exponentialHistogramDataPointSlice) IsStaleNaNInf(i int) (bool, pcommo
 }
 
 // CalculateDeltaDatapoints retrieves the SummaryDataPoint at the given index and perform calculation with sum and count while retain the quantile value.
-func (dps summaryDataPointSlice) CalculateDeltaDatapoints(i int, _ string, detailedMetrics bool, calculators *emfCalculators) ([]dataPoint, bool) {
+func (dps summaryDataPointSlice) CalculateDeltaDatapoints(i int, _ string, detailedMetrics bool, calculators *emfCalculators, logger *zap.Logger) ([]dataPoint, bool) {
 	metric := dps.SummaryDataPointSlice.At(i)
 	labels := createLabels(metric.Attributes())
 	timestampMs := unixNanoToMilliseconds(metric.Timestamp())
