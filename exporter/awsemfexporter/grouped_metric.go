@@ -88,8 +88,8 @@ func addToGroupedMetric(
 			}
 
 			// Extra params to use when grouping metrics
-			metadata.metricIndex = i
-			config.logger.Debug("metadata.metricIndex: ", zap.Any("metadata.metricIndex", metadata.metricIndex), zap.Any("labels", labels))
+			metadata.groupedMetricMetadata.metricIndex = i
+			config.logger.Debug("metadata.metricIndex: ", zap.Any("metadata.metricIndex", metadata.groupedMetricMetadata.metricIndex), zap.Any("labels", labels))
 			groupKey := aws.NewKey(metadata.groupedMetricMetadata, labels)
 			if _, ok := groupedMetrics[groupKey]; ok {
 				// if MetricName already exists in metrics map, print warning log
