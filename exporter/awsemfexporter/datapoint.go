@@ -253,6 +253,9 @@ func (dps exponentialHistogramDataPointSlice) CalculateDeltaDatapoints(idx int, 
 	if metric.ZeroCount() > 0 {
 		totalBucketLen++
 	}
+	logger.Debug("metric.Positive().BucketCounts().Len()", zap.Int("metric.Positive().BucketCounts().Len()", metric.Positive().BucketCounts().Len()))
+	logger.Debug("metric.Negative().BucketCounts().Len()", zap.Int("metric.Negative().BucketCounts().Len()", metric.Negative().BucketCounts().Len()))
+	logger.Debug("totalBucketLen", zap.Int("totalBucketLen", totalBucketLen))
 	currentLength := 0
 	firstDataPointLength := totalBucketLen - 100
 	if firstDataPointLength < 0 {
@@ -266,6 +269,7 @@ func (dps exponentialHistogramDataPointSlice) CalculateDeltaDatapoints(idx int, 
 	bucketBegin = 0
 	bucketEnd = 0
 	for i := positiveBucketCounts.Len() - 1; i >= 0; i-- {
+		logger.Debug("positiveBucketCountsNo", zap.Int("positiveBucketCountsNo", i))
 		index := i + int(positiveOffset)
 		if bucketEnd == 0 {
 			bucketEnd = math.Pow(base, float64(index+1))
@@ -324,6 +328,7 @@ func (dps exponentialHistogramDataPointSlice) CalculateDeltaDatapoints(idx int, 
 	bucketBegin = 0
 	bucketEnd = 0
 	for i := 0; i < negativeBucketCounts.Len(); i++ {
+		logger.Debug("negativeBucketCountsNo", zap.Int("negativeBucketCountsNo", i))
 		index := i + int(negativeOffset)
 		if bucketEnd == 0 {
 			bucketEnd = -math.Pow(base, float64(index))
@@ -369,6 +374,7 @@ func (dps exponentialHistogramDataPointSlice) CalculateDeltaDatapoints(idx int, 
 
 	// Data point gets the remaining elements
 	if firstDataPointCount > 0 {
+		logger.Debug("CalculateDeltaDatapoints: second data point Added")
 		datapoints = append(datapoints, dataPoint{
 			name: dps.metricName,
 			value: &cWMetricHistogram{
@@ -383,6 +389,14 @@ func (dps exponentialHistogramDataPointSlice) CalculateDeltaDatapoints(idx int, 
 			timestampMs: unixNanoToMilliseconds(metric.Timestamp()),
 		})
 	}
+
+	//fmt.Println("CalculateDeltaDatapoints: exponentialHistogramDataPointSlice two datapoints")
+	//fmt.Println("arrayValues length", totalBucketLen)
+	//fmt.Println("first data point length", firstDataPointLength)
+	//fmt.Println("second data point length", totalBucketLen-firstDataPointLength)
+	//fmt.Println("original count", int(metric.Count())) // Convert uint64 to int
+	//fmt.Println("first data point count", firstDataPointCount)
+	//fmt.Println("second data point count", float64(metric.Count()-uint64(firstDataPointCount))) // Convert metric.Count() to float64
 
 	logger.Debug("CalculateDeltaDatapoints: exponentialHistogramDataPointSlice two datapoints length",
 		zap.Int("arrayValues length", totalBucketLen),

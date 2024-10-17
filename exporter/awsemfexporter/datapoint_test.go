@@ -943,6 +943,66 @@ func TestCalculateDeltaDatapoints_ExponentialHistogramDataPointSlice(t *testing.
 
 }
 
+func TestCalculateDeltaDatapoints_ExponentialHistogramDataPointSliceWithSplitDataPoints(t *testing.T) {
+	logger := zap.NewNop()
+	dmd := generateDeltaMetricMetadata(false, "foo", false)
+
+	testCases := []struct {
+		name         string
+		histogramDPS pmetric.ExponentialHistogramDataPointSlice
+	}{
+		{
+			name: "Exponential histogram with more than 100 buckets",
+			histogramDPS: func() pmetric.ExponentialHistogramDataPointSlice {
+				histogramDPS := pmetric.NewExponentialHistogramDataPointSlice()
+				histogramDP := histogramDPS.AppendEmpty()
+				posBucketCounts := make([]uint64, 60)
+				for i := range posBucketCounts {
+					posBucketCounts[i] = uint64(i + 1)
+				}
+				histogramDP.Positive().BucketCounts().FromRaw(posBucketCounts)
+				histogramDP.SetZeroCount(2)
+				negBucketCounts := make([]uint64, 60)
+				for i := range negBucketCounts {
+					negBucketCounts[i] = uint64(i + 1)
+				}
+				histogramDP.Negative().BucketCounts().FromRaw(negBucketCounts)
+				histogramDP.Attributes().PutStr("label1", "value1")
+				return histogramDPS
+			}(),
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(_ *testing.T) {
+			// Given the histogram datapoints
+			exponentialHistogramDatapointSlice := exponentialHistogramDataPointSlice{dmd, tc.histogramDPS}
+			emfCalcs := setupEmfCalculators()
+			defer require.NoError(t, shutdownEmfCalculators(emfCalcs))
+			// When calculate the delta datapoints for histograms
+			dps, retained := exponentialHistogramDatapointSlice.CalculateDeltaDatapoints(0, instrLibName, false, emfCalcs, logger)
+
+			// Then receiving the following datapoint with an expected length
+			assert.True(t, retained)
+			assert.Equal(t, 1, exponentialHistogramDatapointSlice.Len())
+			assert.Equal(t, 2, len(dps))
+			histogram0, ok := dps[0].value.(*cWMetricHistogram)
+			if !ok {
+				t.Fatalf("dps[0].value is not of type cWMetricHistogram, got %T", dps[0].value)
+			}
+			assert.Equal(t, 100, len(histogram0.Counts))
+			assert.Equal(t, 100, len(histogram0.Values))
+			histogram1, ok := dps[1].value.(*cWMetricHistogram)
+			if !ok {
+				t.Fatalf("dps[0].value is not of type cWMetricHistogram")
+			}
+			assert.Equal(t, 21, len(histogram1.Counts))
+			assert.Equal(t, 21, len(histogram1.Values))
+		})
+	}
+
+}
+
 func TestIsStaleNaNInf_ExponentialHistogramDataPointSlice(t *testing.T) {
 
 	testCases := []struct {
