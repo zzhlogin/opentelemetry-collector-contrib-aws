@@ -374,7 +374,14 @@ func (dps exponentialHistogramDataPointSlice) CalculateDeltaDatapoints(idx int, 
 
 	// Data point gets the remaining elements
 	if firstDataPointCount > 0 {
-		logger.Debug("CalculateDeltaDatapoints: second data point Added")
+		logger.Debug("CalculateDeltaDatapoints: second data point Added",
+			zap.Int("arrayValues length", totalBucketLen),
+			zap.Int("first data point length", firstDataPointLength),
+			zap.Int("second data point length", totalBucketLen-firstDataPointLength),
+			zap.Int("original count", int(metric.Count())), // Convert uint64 to int
+			zap.Int("first data point count", firstDataPointCount),
+			zap.Float64("second data point count", float64(metric.Count()-uint64(firstDataPointCount))),
+		)
 		datapoints = append(datapoints, dataPoint{
 			name: dps.metricName,
 			value: &cWMetricHistogram{
