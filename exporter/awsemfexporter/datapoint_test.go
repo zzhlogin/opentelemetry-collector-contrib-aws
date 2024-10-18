@@ -451,7 +451,6 @@ func TestIsStaleNaNInf_NumberDataPointSlice(t *testing.T) {
 }
 
 func TestCalculateDeltaDatapoints_NumberDataPointSlice(t *testing.T) {
-	logger := zap.NewNop()
 	emfCalcs := setupEmfCalculators()
 	defer require.NoError(t, shutdownEmfCalculators(emfCalcs))
 	for _, retainInitialValueOfDeltaMetric := range []bool{true, false} {
@@ -559,7 +558,7 @@ func TestCalculateDeltaDatapoints_NumberDataPointSlice(t *testing.T) {
 				numberDatapointSlice := numberDataPointSlice{dmd, numberDPS}
 
 				// When calculate the delta datapoints for number datapoint
-				dps, retained := numberDatapointSlice.CalculateDeltaDatapoints(0, instrLibName, false, emfCalcs, logger)
+				dps, retained := numberDatapointSlice.CalculateDeltaDatapoints(0, instrLibName, false, emfCalcs)
 
 				assert.Equal(t, 1, numberDatapointSlice.Len())
 				assert.Equal(t, tc.expectedRetained, retained)
@@ -575,7 +574,6 @@ func TestCalculateDeltaDatapoints_NumberDataPointSlice(t *testing.T) {
 }
 
 func TestCalculateDeltaDatapoints_HistogramDataPointSlice(t *testing.T) {
-	logger := zap.NewNop()
 	dmd := generateDeltaMetricMetadata(false, "foo", false)
 
 	testCases := []struct {
@@ -645,7 +643,7 @@ func TestCalculateDeltaDatapoints_HistogramDataPointSlice(t *testing.T) {
 			emfCalcs := setupEmfCalculators()
 			defer require.NoError(t, shutdownEmfCalculators(emfCalcs))
 			// When calculate the delta datapoints for histograms
-			dps, retained := histogramDatapointSlice.CalculateDeltaDatapoints(0, instrLibName, false, emfCalcs, logger)
+			dps, retained := histogramDatapointSlice.CalculateDeltaDatapoints(0, instrLibName, false, emfCalcs)
 
 			// Then receiving the following datapoint with an expected length
 			assert.True(t, retained)
@@ -826,7 +824,6 @@ func TestIsStaleNaNInf_HistogramDataPointSlice(t *testing.T) {
 }
 
 func TestCalculateDeltaDatapoints_HistogramDataPointSlice_Delta(t *testing.T) {
-	logger := zap.NewNop()
 	cumulativeDeltaMetricMetadata := generateDeltaMetricMetadata(true, "foo", false)
 
 	histogramDPS := pmetric.NewHistogramDataPointSlice()
@@ -840,13 +837,13 @@ func TestCalculateDeltaDatapoints_HistogramDataPointSlice_Delta(t *testing.T) {
 	histogramDatapointSlice := histogramDataPointSlice{cumulativeDeltaMetricMetadata, histogramDPS}
 	emfCalcs := setupEmfCalculators()
 	defer require.NoError(t, shutdownEmfCalculators(emfCalcs))
-	dps, retained := histogramDatapointSlice.CalculateDeltaDatapoints(0, instrLibName, false, emfCalcs, logger)
+	dps, retained := histogramDatapointSlice.CalculateDeltaDatapoints(0, instrLibName, false, emfCalcs)
 
 	assert.False(t, retained)
 	assert.Equal(t, 1, histogramDatapointSlice.Len())
 	assert.Equal(t, 0, len(dps))
 
-	dps, retained = histogramDatapointSlice.CalculateDeltaDatapoints(0, instrLibName, false, emfCalcs, logger)
+	dps, retained = histogramDatapointSlice.CalculateDeltaDatapoints(0, instrLibName, false, emfCalcs)
 	assert.True(t, retained)
 	assert.Equal(t, 1, histogramDatapointSlice.Len())
 	assert.Equal(t, dataPoint{
@@ -860,7 +857,7 @@ func TestCalculateDeltaDatapoints_HistogramDataPointSlice_Delta(t *testing.T) {
 	histogramDP.SetMin(5)
 	histogramDP.SetMax(40)
 
-	dps, retained = histogramDatapointSlice.CalculateDeltaDatapoints(0, instrLibName, false, emfCalcs, logger)
+	dps, retained = histogramDatapointSlice.CalculateDeltaDatapoints(0, instrLibName, false, emfCalcs)
 	assert.True(t, retained)
 	assert.Equal(t, 1, histogramDatapointSlice.Len())
 	assert.Equal(t, dataPoint{
@@ -871,7 +868,6 @@ func TestCalculateDeltaDatapoints_HistogramDataPointSlice_Delta(t *testing.T) {
 }
 
 func TestCalculateDeltaDatapoints_ExponentialHistogramDataPointSlice(t *testing.T) {
-	logger := zap.NewNop()
 	dmd := generateDeltaMetricMetadata(false, "foo", false)
 
 	testCases := []struct {
@@ -961,7 +957,7 @@ func TestCalculateDeltaDatapoints_ExponentialHistogramDataPointSlice(t *testing.
 			emfCalcs := setupEmfCalculators()
 			defer require.NoError(t, shutdownEmfCalculators(emfCalcs))
 			// When calculate the delta datapoints for histograms
-			dps, retained := exponentialHistogramDatapointSlice.CalculateDeltaDatapoints(0, instrLibName, false, emfCalcs, logger)
+			dps, retained := exponentialHistogramDatapointSlice.CalculateDeltaDatapoints(0, instrLibName, false, emfCalcs)
 
 			// Then receiving the following datapoint with an expected length
 			assert.True(t, retained)
@@ -973,7 +969,6 @@ func TestCalculateDeltaDatapoints_ExponentialHistogramDataPointSlice(t *testing.
 }
 
 func TestCalculateDeltaDatapoints_ExponentialHistogramDataPointSliceWithSplitDataPoints(t *testing.T) {
-	logger := zap.NewNop()
 	dmd := generateDeltaMetricMetadata(false, "foo", false)
 
 	testCases := []struct {
@@ -1044,7 +1039,7 @@ func TestCalculateDeltaDatapoints_ExponentialHistogramDataPointSliceWithSplitDat
 			exponentialHistogramDatapointSlice := exponentialHistogramDataPointSlice{dmd, tc.histogramDPS}
 			emfCalcs := setupEmfCalculators()
 			defer require.NoError(t, shutdownEmfCalculators(emfCalcs))
-			dps, retained := exponentialHistogramDatapointSlice.CalculateDeltaDatapoints(0, instrLibName, false, emfCalcs, logger)
+			dps, retained := exponentialHistogramDatapointSlice.CalculateDeltaDatapoints(0, instrLibName, false, emfCalcs)
 
 			assert.True(t, retained)
 			assert.Equal(t, 1, exponentialHistogramDatapointSlice.Len())
@@ -1253,7 +1248,6 @@ func TestIsStaleNaNInf_ExponentialHistogramDataPointSlice(t *testing.T) {
 }
 
 func TestCalculateDeltaDatapoints_SummaryDataPointSlice(t *testing.T) {
-	logger := zap.NewNop()
 	emfCalcs := setupEmfCalculators()
 	defer require.NoError(t, shutdownEmfCalculators(emfCalcs))
 	for _, retainInitialValueOfDeltaMetric := range []bool{true, false} {
@@ -1320,7 +1314,7 @@ func TestCalculateDeltaDatapoints_SummaryDataPointSlice(t *testing.T) {
 				summaryDatapointSlice := summaryDataPointSlice{dmd, summaryDPS}
 
 				// When calculate the delta datapoints for sum and count in summary
-				dps, retained := summaryDatapointSlice.CalculateDeltaDatapoints(0, "", true, emfCalcs, logger)
+				dps, retained := summaryDatapointSlice.CalculateDeltaDatapoints(0, "", true, emfCalcs)
 
 				// Then receiving the following datapoint with an expected length
 				assert.Equal(t, tc.expectedRetained, retained)
@@ -1718,7 +1712,6 @@ func TestGetDataPoints(t *testing.T) {
 }
 
 func BenchmarkGetAndCalculateDeltaDataPoints(b *testing.B) {
-	logger := zap.NewNop()
 	generateMetrics := []pmetric.Metrics{
 		generateTestGaugeMetric("int-gauge", intValueType),
 		generateTestGaugeMetric("int-gauge", doubleValueType),
@@ -1741,7 +1734,7 @@ func BenchmarkGetAndCalculateDeltaDataPoints(b *testing.B) {
 			dps := getDataPoints(metrics.At(i), metadata, zap.NewNop())
 
 			for i := 0; i < dps.Len(); i++ {
-				dps.CalculateDeltaDatapoints(i, "", false, emfCalcs, logger)
+				dps.CalculateDeltaDatapoints(i, "", false, emfCalcs)
 			}
 		}
 	}
