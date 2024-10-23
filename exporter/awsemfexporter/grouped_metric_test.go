@@ -541,10 +541,10 @@ func TestTranslateUnit(t *testing.T) {
 	assert.Equal(t, "Count", v)
 }
 
-func generateTestMetricMetadata(namespace string, timestamp int64, logGroup, logStreamName, instrumentationScopeName string, metricType pmetric.MetricType, metricIndex ...int) cWMetricMetadata {
+func generateTestMetricMetadata(namespace string, timestamp int64, logGroup, logStreamName, instrumentationScopeName string, metricType pmetric.MetricType, batchIndex ...int) cWMetricMetadata {
 	mIndex := 0
-	if len(metricIndex) > 0 {
-		mIndex = metricIndex[0]
+	if len(batchIndex) > 0 {
+		mIndex = batchIndex[0]
 	}
 	return cWMetricMetadata{
 		receiver: prometheusReceiver,
@@ -554,7 +554,7 @@ func generateTestMetricMetadata(namespace string, timestamp int64, logGroup, log
 			logGroup:       logGroup,
 			logStream:      logStreamName,
 			metricDataType: metricType,
-			metricIndex:    mIndex,
+			batchIndex:     mIndex,
 		},
 		instrumentationScopeName: instrumentationScopeName,
 	}
