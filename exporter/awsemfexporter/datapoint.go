@@ -261,7 +261,7 @@ func (dps exponentialHistogramDataPointSlice) CalculateDeltaDatapoints(idx int, 
 	}
 
 	for currentBucketIndex < totalBucketLen {
-		// Create a new dataPointSplit with a capacity of up to 100 buckets
+		// Create a new dataPointSplit with a capacity of up to splitThreshold buckets
 		split := dataPointSplit{
 			cWMetricHistogram: &cWMetricHistogram{
 				Values: []float64{},
