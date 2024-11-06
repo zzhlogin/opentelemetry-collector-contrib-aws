@@ -60,7 +60,7 @@ type dataPoints interface {
 	// dataPoint: the adjusted data point
 	// retained: indicates whether the data point is valid for further process
 	// NOTE: It is an expensive call as it calculates the metric value.
-	CalculateDeltaDatapoints(i int, instrumentationScopeName string, detailedMetrics bool, calculators *emfCalculators) (dataPoint []dataPoint, retained bool)
+	CalculateDeltaDatapoints(i int, instrumentationScopeName string, detailedMetrics bool, calculators *emfCalculators, logger *zap.Logger) (dataPoint []dataPoint, retained bool)
 	// IsStaleNaNInf returns true if metric value has NoRecordedValue flag set or if any metric value contains a NaN or Inf.
 	// When return value is true, IsStaleNaNInf also returns the attributes attached to the metric which can be used for
 	// logging purposes.
@@ -112,7 +112,7 @@ type dataPointSplit struct {
 }
 
 // CalculateDeltaDatapoints retrieves the NumberDataPoint at the given index and performs rate/delta calculation if necessary.
-func (dps numberDataPointSlice) CalculateDeltaDatapoints(i int, _ string, _ bool, calculators *emfCalculators) ([]dataPoint, bool) {
+func (dps numberDataPointSlice) CalculateDeltaDatapoints(i int, _ string, _ bool, calculators *emfCalculators, logger *zap.Logger) ([]dataPoint, bool) {
 	metric := dps.NumberDataPointSlice.At(i)
 	labels := createLabels(metric.Attributes())
 	timestampMs := unixNanoToMilliseconds(metric.Timestamp())
@@ -163,7 +163,7 @@ func (dps numberDataPointSlice) IsStaleNaNInf(i int) (bool, pcommon.Map) {
 }
 
 // CalculateDeltaDatapoints retrieves the HistogramDataPoint at the given index.
-func (dps histogramDataPointSlice) CalculateDeltaDatapoints(i int, _ string, _ bool, calculators *emfCalculators) ([]dataPoint, bool) {
+func (dps histogramDataPointSlice) CalculateDeltaDatapoints(i int, _ string, _ bool, calculators *emfCalculators, logger *zap.Logger) ([]dataPoint, bool) {
 	metric := dps.HistogramDataPointSlice.At(i)
 	labels := createLabels(metric.Attributes())
 	timestamp := unixNanoToMilliseconds(metric.Timestamp())
@@ -227,10 +227,10 @@ func (dps histogramDataPointSlice) IsStaleNaNInf(i int) (bool, pcommon.Map) {
 // - Min and Max values are recalculated based on the bucket boundary within that specific split.
 // - Sum is only assigned to the first split to ensure the total sum of the datapoints after aggregation is correct.
 // - Count is accumulated based on the bucket counts within each split.
-func (dps exponentialHistogramDataPointSlice) CalculateDeltaDatapoints(idx int, _ string, _ bool, _ *emfCalculators) ([]dataPoint, bool) {
+func (dps exponentialHistogramDataPointSlice) CalculateDeltaDatapoints(idx int, _ string, _ bool, _ *emfCalculators, logger *zap.Logger) ([]dataPoint, bool) {
 	metric := dps.ExponentialHistogramDataPointSlice.At(idx)
 
-	const splitThreshold = 100
+	const splitThreshold = 50
 	var currentBucketIndex = 0
 	var datapoints []dataPoint
 	var currentPositiveIndex = metric.Positive().BucketCounts().Len() - 1
@@ -295,6 +295,43 @@ func (dps exponentialHistogramDataPointSlice) CalculateDeltaDatapoints(idx int, 
 			labels:      createLabels(metric.Attributes()),
 			timestampMs: unixNanoToMilliseconds(metric.Timestamp()),
 		})
+	}
+
+	logger.Debug("Split the exponential histogram metric into multiple data points",
+		zap.Int("beforeSplitTotalBucketLen", totalBucketLen),
+		zap.Int("afterSplit", len(datapoints)),
+		zap.Int("splitThreshold", splitThreshold),
+	)
+
+	expectedSplitNumber := (totalBucketLen + splitThreshold - 1) / splitThreshold
+	if len(datapoints) != expectedSplitNumber {
+		logger.Warn("The number of splits does not match the expected number",
+			zap.Int("datapoints", len(datapoints)),
+			zap.Int("expectedSplitNumber", expectedSplitNumber),
+		)
+	}
+	expectedCount := metric.Count()
+	actualCount := 0
+	for _, dp := range datapoints {
+		actualCount += int(dp.value.(*cWMetricHistogram).Count)
+	}
+	if uint64(actualCount) != expectedCount {
+		logger.Warn("The sum of counts in the splits does not match the expected count",
+			zap.Int("actualCount", actualCount),
+			zap.Uint64("expectedCount", expectedCount),
+		)
+	}
+	if metric.Min() != datapoints[len(datapoints)-1].value.(*cWMetricHistogram).Min {
+		logger.Warn("The min value of the last split does not match the min value of the metric",
+			zap.Float64("minValue", datapoints[len(datapoints)-1].value.(*cWMetricHistogram).Min),
+			zap.Float64("metricMin", metric.Min()),
+		)
+	}
+	if metric.Max() != datapoints[0].value.(*cWMetricHistogram).Max {
+		logger.Warn("The max value of the first split does not match the max value of the metric",
+			zap.Float64("maxValue", datapoints[0].value.(*cWMetricHistogram).Max),
+			zap.Float64("metricMax", metric.Max()),
+		)
 	}
 	return datapoints, true
 }
@@ -417,7 +454,7 @@ func (dps exponentialHistogramDataPointSlice) IsStaleNaNInf(i int) (bool, pcommo
 }
 
 // CalculateDeltaDatapoints retrieves the SummaryDataPoint at the given index and perform calculation with sum and count while retain the quantile value.
-func (dps summaryDataPointSlice) CalculateDeltaDatapoints(i int, _ string, detailedMetrics bool, calculators *emfCalculators) ([]dataPoint, bool) {
+func (dps summaryDataPointSlice) CalculateDeltaDatapoints(i int, _ string, detailedMetrics bool, calculators *emfCalculators, logger *zap.Logger) ([]dataPoint, bool) {
 	metric := dps.SummaryDataPointSlice.At(i)
 	labels := createLabels(metric.Attributes())
 	timestampMs := unixNanoToMilliseconds(metric.Timestamp())

@@ -427,7 +427,7 @@ func TestAddToGroupedMetric(t *testing.T) {
 			)
 			assert.NoError(t, err)
 		}
-		assert.Equal(t, 2, len(groupedMetrics))
+		assert.Equal(t, 3, len(groupedMetrics))
 		expectedLabels := map[string]string{"label1": "value1"}
 		idx := 0
 		for _, v := range groupedMetrics {
