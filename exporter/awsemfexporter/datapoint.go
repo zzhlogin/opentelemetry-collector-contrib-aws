@@ -111,6 +111,25 @@ type dataPointSplit struct {
 	capacity          int
 }
 
+func (split *dataPointSplit) isNotFull() bool {
+	return split.length < split.capacity
+}
+
+func (split *dataPointSplit) setMax(maxVal float64) {
+	split.cWMetricHistogram.Max = maxVal
+}
+
+func (split *dataPointSplit) setMin(minVal float64) {
+	split.cWMetricHistogram.Min = minVal
+}
+
+func (split *dataPointSplit) appendMetricData(metricVal float64, count uint64) {
+	split.cWMetricHistogram.Values = append(split.cWMetricHistogram.Values, metricVal)
+	split.cWMetricHistogram.Counts = append(split.cWMetricHistogram.Counts, float64(count))
+	split.length++
+	split.cWMetricHistogram.Count += count
+}
+
 // CalculateDeltaDatapoints retrieves the NumberDataPoint at the given index and performs rate/delta calculation if necessary.
 func (dps numberDataPointSlice) CalculateDeltaDatapoints(i int, _ string, _ bool, calculators *emfCalculators) ([]dataPoint, bool) {
 	metric := dps.NumberDataPointSlice.At(i)
@@ -258,6 +277,17 @@ func (dps exponentialHistogramDataPointSlice) CalculateDeltaDatapoints(idx int, 
 
 	for currentBucketIndex < totalBucketLen {
 		// Create a new dataPointSplit with a capacity of up to splitThreshold buckets
+		capacity := splitThreshold
+		if totalBucketLen-currentBucketIndex < splitThreshold {
+			capacity = totalBucketLen - currentBucketIndex
+		}
+
+		sum := 0.0
+		// Only assign `Sum` if this is the first split to make sure the total sum of the datapoints after aggregation is correct.
+		if currentBucketIndex == 0 {
+			sum = metric.Sum()
+		}
+
 		split := dataPointSplit{
 			cWMetricHistogram: &cWMetricHistogram{
 				Values: []float64{},
@@ -265,27 +295,18 @@ func (dps exponentialHistogramDataPointSlice) CalculateDeltaDatapoints(idx int, 
 				Max:    metric.Max(),
 				Min:    metric.Min(),
 				Count:  0,
-				Sum:    0,
+				Sum:    sum,
 			},
 			length:   0,
-			capacity: splitThreshold,
-		}
-
-		// Only assign `Sum` if this is the first split to make sure the total sum of the datapoints after aggregation is correct.
-		if currentBucketIndex == 0 {
-			split.cWMetricHistogram.Sum = metric.Sum()
-		}
-
-		if totalBucketLen-currentBucketIndex < splitThreshold {
-			split.capacity = totalBucketLen - currentBucketIndex
+			capacity: capacity,
 		}
 
 		// Set mid-point of positive buckets in values/counts array.
-		currentBucketIndex, currentPositiveIndex = iteratePositiveBuckets(&split, metric, currentBucketIndex, currentPositiveIndex, totalBucketLen)
+		currentBucketIndex, currentPositiveIndex = collectDatapointsWithPositiveBuckets(&split, metric, currentBucketIndex, currentPositiveIndex)
 		// Set count of zero bucket in values/counts array.
-		currentBucketIndex, currentZeroIndex = iterateZeroBucket(&split, metric, currentBucketIndex, currentZeroIndex, totalBucketLen)
+		currentBucketIndex, currentZeroIndex = collectDatapointsWithZeroBuckets(&split, metric, currentBucketIndex, currentZeroIndex)
 		// Set mid-point of negative buckets in values/counts array.
-		currentBucketIndex, currentNegativeIndex = iterateNegativeBuckets(&split, metric, currentBucketIndex, currentNegativeIndex, totalBucketLen)
+		currentBucketIndex, currentNegativeIndex = collectDatapointsWithNegativeBuckets(&split, metric, currentBucketIndex, currentNegativeIndex)
 
 		// Add the current split to the datapoints list
 		datapoints = append(datapoints, dataPoint{
@@ -303,7 +324,11 @@ func (dps exponentialHistogramDataPointSlice) CalculateDeltaDatapoints(idx int, 
 	return datapoints, true
 }
 
-func iteratePositiveBuckets(split *dataPointSplit, metric pmetric.ExponentialHistogramDataPoint, currentBucketIndex int, currentPositiveIndex int, totalBucketLen int) (int, int) {
+func collectDatapointsWithPositiveBuckets(split *dataPointSplit, metric pmetric.ExponentialHistogramDataPoint, currentBucketIndex int, currentPositiveIndex int) (int, int) {
+	if !split.isNotFull() || currentPositiveIndex < 0 {
+		return currentBucketIndex, currentPositiveIndex
+	}
+
 	scale := metric.Scale()
 	base := math.Pow(2, math.Pow(2, float64(-scale)))
 	positiveBuckets := metric.Positive()
@@ -312,7 +337,7 @@ func iteratePositiveBuckets(split *dataPointSplit, metric pmetric.ExponentialHis
 	bucketBegin := 0.0
 	bucketEnd := 0.0
 
-	for split.length < split.capacity && currentPositiveIndex >= 0 {
+	for split.isNotFull() && currentPositiveIndex >= 0 {
 		index := currentPositiveIndex + int(positiveOffset)
 		if bucketEnd == 0 {
 			bucketEnd = math.Pow(base, float64(index+1))
@@ -323,15 +348,14 @@ func iteratePositiveBuckets(split *dataPointSplit, metric pmetric.ExponentialHis
 		metricVal := (bucketBegin + bucketEnd) / 2
 		count := positiveBucketCounts.At(currentPositiveIndex)
 		if count > 0 {
-			split.cWMetricHistogram.Values = append(split.cWMetricHistogram.Values, metricVal)
-			split.cWMetricHistogram.Counts = append(split.cWMetricHistogram.Counts, float64(count))
-			split.length++
-			split.cWMetricHistogram.Count += count
+			split.appendMetricData(metricVal, count)
+
+			// The value are append from high to low, set Max from the first bucket (highest value) and Min from the last bucket (lowest value)
 			if split.length == 1 {
-				split.cWMetricHistogram.Max = bucketEnd
+				split.setMax(bucketEnd)
 			}
 			if split.length == split.capacity {
-				split.cWMetricHistogram.Min = bucketBegin
+				split.setMin(bucketBegin)
 			}
 		}
 		currentBucketIndex++
@@ -341,17 +365,16 @@ func iteratePositiveBuckets(split *dataPointSplit, metric pmetric.ExponentialHis
 	return currentBucketIndex, currentPositiveIndex
 }
 
-func iterateZeroBucket(split *dataPointSplit, metric pmetric.ExponentialHistogramDataPoint, currentBucketIndex int, currentZeroIndex int, totalBucketLen int) (int, int) {
-	if metric.ZeroCount() > 0 && split.length < split.capacity && currentZeroIndex == 0 {
-		split.cWMetricHistogram.Values = append(split.cWMetricHistogram.Values, 0)
-		split.cWMetricHistogram.Counts = append(split.cWMetricHistogram.Counts, float64(metric.ZeroCount()))
-		split.length++
-		split.cWMetricHistogram.Count += metric.ZeroCount()
+func collectDatapointsWithZeroBuckets(split *dataPointSplit, metric pmetric.ExponentialHistogramDataPoint, currentBucketIndex int, currentZeroIndex int) (int, int) {
+	if metric.ZeroCount() > 0 && split.isNotFull() && currentZeroIndex == 0 {
+		split.appendMetricData(0, metric.ZeroCount())
+
+		// The value are append from high to low, set Max from the first bucket (highest value) and Min from the last bucket (lowest value)
 		if split.length == 1 {
-			split.cWMetricHistogram.Max = 0
+			split.setMax(0)
 		}
 		if split.length == split.capacity {
-			split.cWMetricHistogram.Min = 0
+			split.setMin(0)
 		}
 		currentZeroIndex++
 		currentBucketIndex++
@@ -360,12 +383,16 @@ func iterateZeroBucket(split *dataPointSplit, metric pmetric.ExponentialHistogra
 	return currentBucketIndex, currentZeroIndex
 }
 
-func iterateNegativeBuckets(split *dataPointSplit, metric pmetric.ExponentialHistogramDataPoint, currentBucketIndex int, currentNegativeIndex int, totalBucketLen int) (int, int) {
+func collectDatapointsWithNegativeBuckets(split *dataPointSplit, metric pmetric.ExponentialHistogramDataPoint, currentBucketIndex int, currentNegativeIndex int) (int, int) {
 	// According to metrics spec, the value in histogram is expected to be non-negative.
 	// https://opentelemetry.io/docs/specs/otel/metrics/api/#histogram
 	// However, the negative support is defined in metrics data model.
 	// https://opentelemetry.io/docs/specs/otel/metrics/data-model/#exponentialhistogram
 	// The negative is also supported but only verified with unit test.
+	if !split.isNotFull() || currentNegativeIndex >= metric.Negative().BucketCounts().Len() {
+		return currentBucketIndex, currentNegativeIndex
+	}
+
 	scale := metric.Scale()
 	base := math.Pow(2, math.Pow(2, float64(-scale)))
 	negativeBuckets := metric.Negative()
@@ -374,7 +401,7 @@ func iterateNegativeBuckets(split *dataPointSplit, metric pmetric.ExponentialHis
 	bucketBegin := 0.0
 	bucketEnd := 0.0
 
-	for split.length < split.capacity && currentNegativeIndex < metric.Negative().BucketCounts().Len() {
+	for split.isNotFull() && currentNegativeIndex < metric.Negative().BucketCounts().Len() {
 		index := currentNegativeIndex + int(negativeOffset)
 		if bucketEnd == 0 {
 			bucketEnd = -math.Pow(base, float64(index))
@@ -385,15 +412,14 @@ func iterateNegativeBuckets(split *dataPointSplit, metric pmetric.ExponentialHis
 		metricVal := (bucketBegin + bucketEnd) / 2
 		count := negativeBucketCounts.At(currentNegativeIndex)
 		if count > 0 {
-			split.cWMetricHistogram.Values = append(split.cWMetricHistogram.Values, metricVal)
-			split.cWMetricHistogram.Counts = append(split.cWMetricHistogram.Counts, float64(count))
-			split.length++
-			split.cWMetricHistogram.Count += count
+			split.appendMetricData(metricVal, count)
+
+			// The value are append from high to low, set Max from the first bucket (highest value) and Min from the last bucket (lowest value)
 			if split.length == 1 {
-				split.cWMetricHistogram.Max = bucketEnd
+				split.setMax(bucketEnd)
 			}
 			if split.length == split.capacity {
-				split.cWMetricHistogram.Min = bucketBegin
+				split.setMin(bucketBegin)
 			}
 		}
 		currentBucketIndex++
