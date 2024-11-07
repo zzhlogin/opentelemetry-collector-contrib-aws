@@ -240,7 +240,6 @@ func (dps exponentialHistogramDataPointSlice) CalculateDeltaDatapoints(idx int, 
 	totalBucketLen := metric.Positive().BucketCounts().Len() + metric.Negative().BucketCounts().Len()
 	if metric.ZeroCount() > 0 {
 		totalBucketLen++
-		zeroCountsBukctes++
 	}
 
 	if totalBucketLen == 0 {
