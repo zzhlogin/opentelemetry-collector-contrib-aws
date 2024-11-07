@@ -306,8 +306,10 @@ func (dps exponentialHistogramDataPointSlice) CalculateDeltaDatapoints(idx int, 
 	expectedSplitNumber := (totalBucketLen + splitThreshold - 1) / splitThreshold
 	if len(datapoints) != expectedSplitNumber {
 		logger.Warn("The number of splits does not match the expected number",
-			zap.Int("datapoints", len(datapoints)),
+			zap.Int("totalBucketLen", totalBucketLen),
+			zap.Int("splitThreshold", splitThreshold),
 			zap.Int("expectedSplitNumber", expectedSplitNumber),
+			zap.Int("datapoints", len(datapoints)),
 		)
 	}
 	expectedCount := metric.Count()
@@ -327,10 +329,17 @@ func (dps exponentialHistogramDataPointSlice) CalculateDeltaDatapoints(idx int, 
 			zap.Float64("metricMin", metric.Min()),
 		)
 	}
+
+	var maxValues []float64
+	for _, dp := range datapoints {
+		maxValues = append(maxValues, dp.value.(*cWMetricHistogram).Max)
+	}
+
 	if metric.Max() != datapoints[0].value.(*cWMetricHistogram).Max {
 		logger.Warn("The max value of the first split does not match the max value of the metric",
 			zap.Float64("maxValue", datapoints[0].value.(*cWMetricHistogram).Max),
 			zap.Float64("metricMax", metric.Max()),
+			zap.Float64s("maxValues", maxValues),
 		)
 	}
 	return datapoints, true
