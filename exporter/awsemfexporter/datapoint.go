@@ -378,7 +378,7 @@ func iteratePositiveBuckets(split *dataPointSplit, metric pmetric.ExponentialHis
 			if split.length == 0 && currentBucketIndex != 0 {
 				split.cWMetricHistogram.Max = bucketEnd
 			}
-			if split.length == split.capacity && currentBucketIndex != totalBucketLen-1 {
+			if split.length == split.capacity-1 && currentBucketIndex != totalBucketLen-1 {
 				split.cWMetricHistogram.Min = bucketBegin
 			}
 		}
@@ -394,14 +394,14 @@ func iterateZeroBucket(split *dataPointSplit, metric pmetric.ExponentialHistogra
 	if metric.ZeroCount() > 0 && split.length < split.capacity && currentZeroIndex == 0 {
 		split.cWMetricHistogram.Values = append(split.cWMetricHistogram.Values, 0)
 		split.cWMetricHistogram.Counts = append(split.cWMetricHistogram.Counts, float64(metric.ZeroCount()))
-		split.length++
 		split.cWMetricHistogram.Count += metric.ZeroCount()
-		if split.length == 1 && currentBucketIndex != 0 {
+		if split.length == 0 && currentBucketIndex != 0 {
 			split.cWMetricHistogram.Max = 0
 		}
-		if split.length == split.capacity && currentBucketIndex != totalBucketLen-1 {
+		if split.length == split.capacity-1 && currentBucketIndex != totalBucketLen-1 {
 			split.cWMetricHistogram.Min = 0
 		}
+		split.length++
 		currentZeroIndex++
 		currentBucketIndex++
 	}
@@ -440,7 +440,7 @@ func iterateNegativeBuckets(split *dataPointSplit, metric pmetric.ExponentialHis
 			if split.length == 0 && currentBucketIndex != 0 {
 				split.cWMetricHistogram.Max = bucketEnd
 			}
-			if split.length == split.capacity && currentBucketIndex != totalBucketLen-1 {
+			if split.length == split.capacity-1 && currentBucketIndex != totalBucketLen-1 {
 				split.cWMetricHistogram.Min = bucketBegin
 			}
 		}
