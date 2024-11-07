@@ -331,8 +331,10 @@ func (dps exponentialHistogramDataPointSlice) CalculateDeltaDatapoints(idx int, 
 	}
 
 	var maxValues []float64
+	var dpValuesLength []int
 	for _, dp := range datapoints {
 		maxValues = append(maxValues, dp.value.(*cWMetricHistogram).Max)
+		dpValuesLength = append(dpValuesLength, len(dp.value.(*cWMetricHistogram).Counts))
 	}
 
 	if metric.Max() != datapoints[0].value.(*cWMetricHistogram).Max {
@@ -340,6 +342,11 @@ func (dps exponentialHistogramDataPointSlice) CalculateDeltaDatapoints(idx int, 
 			zap.Float64("maxValue", datapoints[0].value.(*cWMetricHistogram).Max),
 			zap.Float64("metricMax", metric.Max()),
 			zap.Float64s("maxValues", maxValues),
+			zap.Ints("dpValuesLength", dpValuesLength),
+			zap.Int("totalBucketLen", totalBucketLen),
+			zap.Int("splitThreshold", splitThreshold),
+			zap.Int("expectedSplitNumber", expectedSplitNumber),
+			zap.Int("datapoints", len(datapoints)),
 		)
 	}
 	return datapoints, true
