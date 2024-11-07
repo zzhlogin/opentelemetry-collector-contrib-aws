@@ -230,6 +230,7 @@ func (dps histogramDataPointSlice) IsStaleNaNInf(i int) (bool, pcommon.Map) {
 func (dps exponentialHistogramDataPointSlice) CalculateDeltaDatapoints(idx int, _ string, _ bool, _ *emfCalculators, logger *zap.Logger) ([]dataPoint, bool) {
 	metric := dps.ExponentialHistogramDataPointSlice.At(idx)
 
+	var zeroCountsBukctes = 0
 	const splitThreshold = 50
 	var currentBucketIndex = 0
 	var datapoints []dataPoint
@@ -239,6 +240,7 @@ func (dps exponentialHistogramDataPointSlice) CalculateDeltaDatapoints(idx int, 
 	totalBucketLen := metric.Positive().BucketCounts().Len() + metric.Negative().BucketCounts().Len()
 	if metric.ZeroCount() > 0 {
 		totalBucketLen++
+		zeroCountsBukctes++
 	}
 
 	if totalBucketLen == 0 {
@@ -282,11 +284,11 @@ func (dps exponentialHistogramDataPointSlice) CalculateDeltaDatapoints(idx int, 
 		}
 
 		// Set mid-point of positive buckets in values/counts array.
-		currentBucketIndex, currentPositiveIndex = iteratePositiveBuckets(&split, metric, currentBucketIndex, currentPositiveIndex, totalBucketLen)
+		zeroCountsBukctes, currentBucketIndex, currentPositiveIndex = iteratePositiveBuckets(&split, metric, currentBucketIndex, currentPositiveIndex, totalBucketLen, zeroCountsBukctes)
 		// Set count of zero bucket in values/counts array.
 		currentBucketIndex, currentZeroIndex = iterateZeroBucket(&split, metric, currentBucketIndex, currentZeroIndex, totalBucketLen)
 		// Set mid-point of negative buckets in values/counts array.
-		currentBucketIndex, currentNegativeIndex = iterateNegativeBuckets(&split, metric, currentBucketIndex, currentNegativeIndex, totalBucketLen)
+		zeroCountsBukctes, currentBucketIndex, currentNegativeIndex = iterateNegativeBuckets(&split, metric, currentBucketIndex, currentNegativeIndex, totalBucketLen, zeroCountsBukctes)
 
 		// Add the current split to the datapoints list
 		datapoints = append(datapoints, dataPoint{
@@ -297,21 +299,10 @@ func (dps exponentialHistogramDataPointSlice) CalculateDeltaDatapoints(idx int, 
 		})
 	}
 
-	logger.Debug("Split the exponential histogram metric into multiple data points",
-		zap.Int("beforeSplitTotalBucketLen", totalBucketLen),
-		zap.Int("afterSplit", len(datapoints)),
-		zap.Int("splitThreshold", splitThreshold),
-	)
+	//Override the min and max values of the first and last splits with the raw data of the metric.
+	datapoints[0].value.(*cWMetricHistogram).Max = metric.Max()
+	datapoints[len(datapoints)-1].value.(*cWMetricHistogram).Min = metric.Min()
 
-	expectedSplitNumber := (totalBucketLen + splitThreshold - 1) / splitThreshold
-	if len(datapoints) != expectedSplitNumber {
-		logger.Warn("The number of splits does not match the expected number",
-			zap.Int("totalBucketLen", totalBucketLen),
-			zap.Int("splitThreshold", splitThreshold),
-			zap.Int("expectedSplitNumber", expectedSplitNumber),
-			zap.Int("datapoints", len(datapoints)),
-		)
-	}
 	expectedCount := metric.Count()
 	actualCount := 0
 	for _, dp := range datapoints {
@@ -332,9 +323,24 @@ func (dps exponentialHistogramDataPointSlice) CalculateDeltaDatapoints(idx int, 
 
 	var maxValues []float64
 	var dpValuesLength []int
+	var totaldpbuckets = 0
 	for _, dp := range datapoints {
 		maxValues = append(maxValues, dp.value.(*cWMetricHistogram).Max)
 		dpValuesLength = append(dpValuesLength, len(dp.value.(*cWMetricHistogram).Counts))
+		totaldpbuckets += len(dp.value.(*cWMetricHistogram).Counts)
+	}
+
+	if len(datapoints) > 1 {
+		logger.Debug("Split metric with following details",
+			zap.Float64("maxValue", datapoints[0].value.(*cWMetricHistogram).Max),
+			zap.Float64("metricMax", metric.Max()),
+			zap.Float64s("maxValues", maxValues),
+			zap.Int("zeroCountsBukctes", zeroCountsBukctes),
+			zap.Ints("dpValuesLength", dpValuesLength),
+			zap.Int("totalBucketLen", totalBucketLen),
+			zap.Int("splitThreshold", splitThreshold),
+			zap.Int("datapoints", len(datapoints)),
+		)
 	}
 
 	if metric.Max() != datapoints[0].value.(*cWMetricHistogram).Max {
@@ -345,14 +351,24 @@ func (dps exponentialHistogramDataPointSlice) CalculateDeltaDatapoints(idx int, 
 			zap.Ints("dpValuesLength", dpValuesLength),
 			zap.Int("totalBucketLen", totalBucketLen),
 			zap.Int("splitThreshold", splitThreshold),
-			zap.Int("expectedSplitNumber", expectedSplitNumber),
+			zap.Int("datapoints", len(datapoints)),
+		)
+	}
+
+	if zeroCountsBukctes+totaldpbuckets != totalBucketLen {
+		logger.Warn("The max value of the first split does not match the max value of the metric",
+			zap.Int("zeroCountsBukctes", zeroCountsBukctes),
+			zap.Int("totaldpbuckets", totaldpbuckets),
+			zap.Int("totalBucketLen", totalBucketLen),
+			zap.Ints("dpValuesLength", dpValuesLength),
+			zap.Int("splitThreshold", splitThreshold),
 			zap.Int("datapoints", len(datapoints)),
 		)
 	}
 	return datapoints, true
 }
 
-func iteratePositiveBuckets(split *dataPointSplit, metric pmetric.ExponentialHistogramDataPoint, currentBucketIndex int, currentPositiveIndex int, totalBucketLen int) (int, int) {
+func iteratePositiveBuckets(split *dataPointSplit, metric pmetric.ExponentialHistogramDataPoint, currentBucketIndex int, currentPositiveIndex int, totalBucketLen int, zeroCountsBukctes int) (int, int, int) {
 	scale := metric.Scale()
 	base := math.Pow(2, math.Pow(2, float64(-scale)))
 	positiveBuckets := metric.Positive()
@@ -374,34 +390,36 @@ func iteratePositiveBuckets(split *dataPointSplit, metric pmetric.ExponentialHis
 		if count > 0 {
 			split.cWMetricHistogram.Values = append(split.cWMetricHistogram.Values, metricVal)
 			split.cWMetricHistogram.Counts = append(split.cWMetricHistogram.Counts, float64(count))
+			split.length++
 			split.cWMetricHistogram.Count += count
-			if split.length == 0 && currentBucketIndex != 0 {
+			if split.length == 1 {
 				split.cWMetricHistogram.Max = bucketEnd
 			}
-			if split.length == split.capacity-1 && currentBucketIndex != totalBucketLen-1 {
+			if split.length == split.capacity {
 				split.cWMetricHistogram.Min = bucketBegin
 			}
+		} else {
+			zeroCountsBukctes++
 		}
-		split.length++
 		currentBucketIndex++
 		currentPositiveIndex--
 	}
 
-	return currentBucketIndex, currentPositiveIndex
+	return zeroCountsBukctes, currentBucketIndex, currentPositiveIndex
 }
 
 func iterateZeroBucket(split *dataPointSplit, metric pmetric.ExponentialHistogramDataPoint, currentBucketIndex int, currentZeroIndex int, totalBucketLen int) (int, int) {
 	if metric.ZeroCount() > 0 && split.length < split.capacity && currentZeroIndex == 0 {
 		split.cWMetricHistogram.Values = append(split.cWMetricHistogram.Values, 0)
 		split.cWMetricHistogram.Counts = append(split.cWMetricHistogram.Counts, float64(metric.ZeroCount()))
+		split.length++
 		split.cWMetricHistogram.Count += metric.ZeroCount()
-		if split.length == 0 && currentBucketIndex != 0 {
+		if split.length == 1 {
 			split.cWMetricHistogram.Max = 0
 		}
-		if split.length == split.capacity-1 && currentBucketIndex != totalBucketLen-1 {
+		if split.length == split.capacity {
 			split.cWMetricHistogram.Min = 0
 		}
-		split.length++
 		currentZeroIndex++
 		currentBucketIndex++
 	}
@@ -409,7 +427,7 @@ func iterateZeroBucket(split *dataPointSplit, metric pmetric.ExponentialHistogra
 	return currentBucketIndex, currentZeroIndex
 }
 
-func iterateNegativeBuckets(split *dataPointSplit, metric pmetric.ExponentialHistogramDataPoint, currentBucketIndex int, currentNegativeIndex int, totalBucketLen int) (int, int) {
+func iterateNegativeBuckets(split *dataPointSplit, metric pmetric.ExponentialHistogramDataPoint, currentBucketIndex int, currentNegativeIndex int, totalBucketLen int, zeroCountsBukctes int) (int, int, int) {
 	// According to metrics spec, the value in histogram is expected to be non-negative.
 	// https://opentelemetry.io/docs/specs/otel/metrics/api/#histogram
 	// However, the negative support is defined in metrics data model.
@@ -436,20 +454,22 @@ func iterateNegativeBuckets(split *dataPointSplit, metric pmetric.ExponentialHis
 		if count > 0 {
 			split.cWMetricHistogram.Values = append(split.cWMetricHistogram.Values, metricVal)
 			split.cWMetricHistogram.Counts = append(split.cWMetricHistogram.Counts, float64(count))
+			split.length++
 			split.cWMetricHistogram.Count += count
-			if split.length == 0 && currentBucketIndex != 0 {
+			if split.length == 1 {
 				split.cWMetricHistogram.Max = bucketEnd
 			}
-			if split.length == split.capacity-1 && currentBucketIndex != totalBucketLen-1 {
+			if split.length == split.capacity {
 				split.cWMetricHistogram.Min = bucketBegin
 			}
+		} else {
+			zeroCountsBukctes++
 		}
-		split.length++
 		currentBucketIndex++
 		currentNegativeIndex++
 	}
 
-	return currentBucketIndex, currentNegativeIndex
+	return zeroCountsBukctes, currentBucketIndex, currentNegativeIndex
 }
 
 func (dps exponentialHistogramDataPointSlice) IsStaleNaNInf(i int) (bool, pcommon.Map) {
