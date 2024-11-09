@@ -249,10 +249,10 @@ func (dps exponentialHistogramDataPointSlice) CalculateDeltaDatapoints(idx int, 
 	metric := dps.ExponentialHistogramDataPointSlice.At(idx)
 
 	const splitThreshold = 100
-	var currentBucketIndex = 0
-	var currentPositiveIndex = metric.Positive().BucketCounts().Len() - 1
-	var currentZeroIndex = 0
-	var currentNegativeIndex = 0
+	currentBucketIndex := 0
+	currentPositiveIndex := metric.Positive().BucketCounts().Len() - 1
+	currentZeroIndex := 0
+	currentNegativeIndex := 0
 	var datapoints []dataPoint
 	totalBucketLen := metric.Positive().BucketCounts().Len() + metric.Negative().BucketCounts().Len()
 	if metric.ZeroCount() > 0 {
@@ -301,11 +301,11 @@ func (dps exponentialHistogramDataPointSlice) CalculateDeltaDatapoints(idx int, 
 			capacity: capacity,
 		}
 
-		// Set mid-point of positive buckets in values/counts array.
+		// Set collect values from positive buckets and save into split.
 		currentBucketIndex, currentPositiveIndex = collectDatapointsWithPositiveBuckets(&split, metric, currentBucketIndex, currentPositiveIndex)
-		// Set count of zero bucket in values/counts array.
+		// Set collect values from zero buckets and save into split.
 		currentBucketIndex, currentZeroIndex = collectDatapointsWithZeroBuckets(&split, metric, currentBucketIndex, currentZeroIndex)
-		// Set mid-point of negative buckets in values/counts array.
+		// Set collect values from negative buckets and save into split.
 		currentBucketIndex, currentNegativeIndex = collectDatapointsWithNegativeBuckets(&split, metric, currentBucketIndex, currentNegativeIndex)
 
 		// Add the current split to the datapoints list
@@ -317,7 +317,7 @@ func (dps exponentialHistogramDataPointSlice) CalculateDeltaDatapoints(idx int, 
 		})
 	}
 
-	//Override the min and max values of the first and last splits with the raw data of the metric.
+	// Override the min and max values of the first and last splits with the raw data of the metric.
 	datapoints[0].value.(*cWMetricHistogram).Max = metric.Max()
 	datapoints[len(datapoints)-1].value.(*cWMetricHistogram).Min = metric.Min()
 
@@ -354,7 +354,7 @@ func collectDatapointsWithPositiveBuckets(split *dataPointSplit, metric pmetric.
 			if split.length == 1 {
 				split.setMax(bucketEnd)
 			}
-			if split.length == split.capacity {
+			if !split.isNotFull() {
 				split.setMin(bucketBegin)
 			}
 		}
@@ -373,7 +373,7 @@ func collectDatapointsWithZeroBuckets(split *dataPointSplit, metric pmetric.Expo
 		if split.length == 1 {
 			split.setMax(0)
 		}
-		if split.length == split.capacity {
+		if !split.isNotFull() {
 			split.setMin(0)
 		}
 		currentZeroIndex++
@@ -418,7 +418,7 @@ func collectDatapointsWithNegativeBuckets(split *dataPointSplit, metric pmetric.
 			if split.length == 1 {
 				split.setMax(bucketEnd)
 			}
-			if split.length == split.capacity {
+			if !split.isNotFull() {
 				split.setMin(bucketBegin)
 			}
 		}
