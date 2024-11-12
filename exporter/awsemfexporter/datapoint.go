@@ -304,7 +304,7 @@ func (dps exponentialHistogramDataPointSlice) CalculateDeltaDatapoints(idx int, 
 		// Set collect values from positive buckets and save into split.
 		currentBucketIndex, currentPositiveIndex = collectDatapointsWithPositiveBuckets(&split, metric, currentBucketIndex, currentPositiveIndex)
 		// Set collect values from zero buckets and save into split.
-		currentBucketIndex, currentZeroIndex = collectDatapointsWithZeroBuckets(&split, metric, currentBucketIndex, currentZeroIndex)
+		currentBucketIndex, currentZeroIndex = collectDatapointsWithZeroBucket(&split, metric, currentBucketIndex, currentZeroIndex)
 		// Set collect values from negative buckets and save into split.
 		currentBucketIndex, currentNegativeIndex = collectDatapointsWithNegativeBuckets(&split, metric, currentBucketIndex, currentNegativeIndex)
 
@@ -365,7 +365,7 @@ func collectDatapointsWithPositiveBuckets(split *dataPointSplit, metric pmetric.
 	return currentBucketIndex, currentPositiveIndex
 }
 
-func collectDatapointsWithZeroBuckets(split *dataPointSplit, metric pmetric.ExponentialHistogramDataPoint, currentBucketIndex int, currentZeroIndex int) (int, int) {
+func collectDatapointsWithZeroBucket(split *dataPointSplit, metric pmetric.ExponentialHistogramDataPoint, currentBucketIndex int, currentZeroIndex int) (int, int) {
 	if metric.ZeroCount() > 0 && split.isNotFull() && currentZeroIndex == 0 {
 		split.appendMetricData(0, metric.ZeroCount())
 
