@@ -261,7 +261,7 @@ func (dps exponentialHistogramDataPointSlice) CalculateDeltaDatapoints(idx int, 
 		totalBucketLen++
 	}
 
-	if totalBucketLen == 0 {
+	if totalBucketLen == 0 || metric.Count() == 0.0 {
 		return []dataPoint{{
 			name: dps.metricName,
 			value: &cWMetricHistogram{
@@ -311,12 +311,14 @@ func (dps exponentialHistogramDataPointSlice) CalculateDeltaDatapoints(idx int, 
 		zeroCountsBukctes, currentBucketIndex, currentNegativeIndex = collectDatapointsWithNegativeBuckets(&split, metric, currentBucketIndex, currentNegativeIndex, totalBucketLen, zeroCountsBukctes)
 
 		// Add the current split to the datapoints list
-		datapoints = append(datapoints, dataPoint{
-			name:        dps.metricName,
-			value:       split.cWMetricHistogram,
-			labels:      createLabels(metric.Attributes()),
-			timestampMs: unixNanoToMilliseconds(metric.Timestamp()),
-		})
+		if split.length > 0 {
+			datapoints = append(datapoints, dataPoint{
+				name:        dps.metricName,
+				value:       split.cWMetricHistogram,
+				labels:      createLabels(metric.Attributes()),
+				timestampMs: unixNanoToMilliseconds(metric.Timestamp()),
+			})
+		}
 	}
 
 	//Override the min and max values of the first and last splits with the raw data of the metric.
