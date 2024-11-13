@@ -261,22 +261,6 @@ func (dps exponentialHistogramDataPointSlice) CalculateDeltaDatapoints(idx int, 
 		totalBucketLen++
 	}
 
-	if totalBucketLen == 0 || metric.Count() == 0.0 {
-		return []dataPoint{{
-			name: dps.metricName,
-			value: &cWMetricHistogram{
-				Values: []float64{},
-				Counts: []float64{},
-				Count:  metric.Count(),
-				Sum:    metric.Sum(),
-				Max:    metric.Max(),
-				Min:    metric.Min(),
-			},
-			labels:      createLabels(metric.Attributes()),
-			timestampMs: unixNanoToMilliseconds(metric.Timestamp()),
-		}}, true
-	}
-
 	for currentBucketIndex < totalBucketLen {
 		// Create a new dataPointSplit with a capacity of up to splitThreshold buckets
 		capacity := splitThreshold
@@ -319,6 +303,22 @@ func (dps exponentialHistogramDataPointSlice) CalculateDeltaDatapoints(idx int, 
 				timestampMs: unixNanoToMilliseconds(metric.Timestamp()),
 			})
 		}
+	}
+
+	if len(datapoints) == 0 {
+		return []dataPoint{{
+			name: dps.metricName,
+			value: &cWMetricHistogram{
+				Values: []float64{},
+				Counts: []float64{},
+				Count:  metric.Count(),
+				Sum:    metric.Sum(),
+				Max:    metric.Max(),
+				Min:    metric.Min(),
+			},
+			labels:      createLabels(metric.Attributes()),
+			timestampMs: unixNanoToMilliseconds(metric.Timestamp()),
+		}}, true
 	}
 
 	//Override the min and max values of the first and last splits with the raw data of the metric.
