@@ -433,13 +433,17 @@ func TestAddToGroupedMetric(t *testing.T) {
 		}
 		assert.Len(t, groupedMetrics, 2)
 		expectedLabels := map[string]string{oTellibDimensionKey: instrumentationLibName, "label1": "value1"}
-		idx := 0
+		expectedMetadata := map[int]cWMetricMetadata{
+			0: generateTestMetricMetadata(namespace, timestamp, logGroup, logStreamName, instrumentationLibName, metrics.At(0).Type(), 0),
+			1: generateTestMetricMetadata(namespace, timestamp, logGroup, logStreamName, instrumentationLibName, metrics.At(0).Type(), 1),
+		}
 		for _, v := range groupedMetrics {
 			assert.Len(t, v.metrics, 1)
 			assert.Len(t, v.labels, 2)
-			assert.Equal(t, generateTestMetricMetadata(namespace, timestamp, logGroup, logStreamName, instrumentationLibName, metrics.At(0).Type(), idx), v.metadata)
+			assert.Contains(t, expectedMetadata, v.metadata.groupedMetricMetadata.batchIndex)
+			assert.Equal(t, expectedMetadata[v.metadata.groupedMetricMetadata.batchIndex], v.metadata)
 			assert.Equal(t, expectedLabels, v.labels)
-			idx++
+			delete(expectedMetadata, v.metadata.groupedMetricMetadata.batchIndex)
 		}
 	})
 }
