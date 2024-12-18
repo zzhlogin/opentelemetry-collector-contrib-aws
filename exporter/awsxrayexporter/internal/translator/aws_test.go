@@ -364,9 +364,9 @@ func TestJavaAutoInstrumentation(t *testing.T) {
 func TestJavaAutoInstrumentationStable(t *testing.T) {
 	attributes := make(map[string]pcommon.Value)
 	resource := pcommon.NewResource()
-	resource.Attributes().PutStr(conventions.AttributeTelemetrySDKName, "opentelemetry")
-	resource.Attributes().PutStr(conventions.AttributeTelemetrySDKLanguage, "java")
-	resource.Attributes().PutStr(conventions.AttributeTelemetrySDKVersion, "1.2.3")
+	resource.Attributes().PutStr(conventionsV127.AttributeTelemetrySDKName, "opentelemetry")
+	resource.Attributes().PutStr(conventionsV127.AttributeTelemetrySDKLanguage, "java")
+	resource.Attributes().PutStr(conventionsV127.AttributeTelemetrySDKVersion, "1.2.3")
 	resource.Attributes().PutStr(conventionsV127.AttributeTelemetryDistroVersion, "3.4.5")
 
 	filtered, awsData := makeAws(attributes, resource, nil)
