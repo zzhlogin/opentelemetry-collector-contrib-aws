@@ -150,6 +150,9 @@ func makeCause(span ptrace.Span, attributes map[string]pcommon.Value, resource p
 	}
 
 	val, ok := span.Attributes().Get(conventions.AttributeHTTPStatusCode)
+	if !ok {
+		val, ok = span.Attributes().Get(AwsIndividualHTTPErrorCodeAttr)
+	}
 
 	switch {
 	// The segment status for http spans will be based on their http.statuscode as we found some http

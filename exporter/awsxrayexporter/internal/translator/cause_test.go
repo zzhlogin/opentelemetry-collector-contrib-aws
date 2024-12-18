@@ -196,6 +196,31 @@ func TestCauseWithStatusMessage(t *testing.T) {
 	assert.True(t, strings.Contains(jsonStr, errorMsg))
 }
 
+func TestCauseWithStatusMessageStable(t *testing.T) {
+	errorMsg := "this is a test"
+	attributes := make(map[string]any)
+	attributes[conventions.AttributeHTTPMethod] = "POST"
+	attributes[conventions.AttributeHTTPURL] = "https://api.example.com/widgets"
+	attributes[AwsIndividualHTTPErrorCodeAttr] = 500
+	span := constructExceptionServerSpan(attributes, ptrace.StatusCodeError)
+	span.Status().SetMessage(errorMsg)
+	filtered, _ := makeHTTP(span)
+
+	res := pcommon.NewResource()
+	isError, isFault, isThrottle, filtered, cause := makeCause(span, filtered, res)
+
+	assert.True(t, isFault)
+	assert.False(t, isError)
+	assert.False(t, isThrottle)
+	assert.NotNil(t, filtered)
+	assert.NotNil(t, cause)
+	w := testWriters.borrow()
+	require.NoError(t, w.Encode(cause))
+	jsonStr := w.String()
+	testWriters.release(w)
+	assert.True(t, strings.Contains(jsonStr, errorMsg))
+}
+
 func TestCauseWithHttpStatusMessage(t *testing.T) {
 	errorMsg := "this is a test"
 	attributes := make(map[string]any)
@@ -221,12 +246,61 @@ func TestCauseWithHttpStatusMessage(t *testing.T) {
 	assert.True(t, strings.Contains(jsonStr, errorMsg))
 }
 
+func TestCauseWithHttpStatusMessageStable(t *testing.T) {
+	errorMsg := "this is a test"
+	attributes := make(map[string]any)
+	attributes[conventions.AttributeHTTPMethod] = "POST"
+	attributes[conventions.AttributeHTTPURL] = "https://api.example.com/widgets"
+	attributes[AwsIndividualHTTPErrorCodeAttr] = 500
+	attributes["http.status_text"] = errorMsg
+	span := constructExceptionServerSpan(attributes, ptrace.StatusCodeError)
+	filtered, _ := makeHTTP(span)
+
+	res := pcommon.NewResource()
+	isError, isFault, isThrottle, filtered, cause := makeCause(span, filtered, res)
+
+	assert.True(t, isFault)
+	assert.False(t, isError)
+	assert.False(t, isThrottle)
+	assert.NotNil(t, filtered)
+	assert.NotNil(t, cause)
+	w := testWriters.borrow()
+	require.NoError(t, w.Encode(cause))
+	jsonStr := w.String()
+	testWriters.release(w)
+	assert.True(t, strings.Contains(jsonStr, errorMsg))
+}
+
 func TestCauseWithZeroStatusMessageAndFaultHttpCode(t *testing.T) {
 	errorMsg := "this is a test"
 	attributes := make(map[string]any)
 	attributes[conventions.AttributeHTTPMethod] = "POST"
 	attributes[conventions.AttributeHTTPURL] = "https://api.example.com/widgets"
 	attributes[conventions.AttributeHTTPStatusCode] = 500
+	attributes["http.status_text"] = errorMsg
+
+	span := constructExceptionServerSpan(attributes, ptrace.StatusCodeUnset)
+	filtered, _ := makeHTTP(span)
+	// Status is used to determine whether an error or not.
+	// This span illustrates incorrect instrumentation,
+	// marking a success status with an error http status code, and status wins.
+	// We do not expect to see such spans in practice.
+	res := pcommon.NewResource()
+	isError, isFault, isThrottle, filtered, cause := makeCause(span, filtered, res)
+
+	assert.False(t, isError)
+	assert.True(t, isFault)
+	assert.False(t, isThrottle)
+	assert.NotNil(t, filtered)
+	assert.Nil(t, cause)
+}
+
+func TestCauseWithZeroStatusMessageAndFaultHttpCodeStable(t *testing.T) {
+	errorMsg := "this is a test"
+	attributes := make(map[string]any)
+	attributes[conventions.AttributeHTTPMethod] = "POST"
+	attributes[conventions.AttributeHTTPURL] = "https://api.example.com/widgets"
+	attributes[AwsIndividualHTTPErrorCodeAttr] = 500
 	attributes["http.status_text"] = errorMsg
 
 	span := constructExceptionServerSpan(attributes, ptrace.StatusCodeUnset)
@@ -338,6 +412,30 @@ func TestCauseWithZeroStatusMessageAndFaultErrorCode(t *testing.T) {
 	assert.Nil(t, cause)
 }
 
+func TestCauseWithZeroStatusMessageAndFaultErrorCodeStable(t *testing.T) {
+	errorMsg := "this is a test"
+	attributes := make(map[string]any)
+	attributes[conventions.AttributeHTTPMethod] = "POST"
+	attributes[conventions.AttributeHTTPURL] = "https://api.example.com/widgets"
+	attributes[AwsIndividualHTTPErrorCodeAttr] = 400
+	attributes["http.status_text"] = errorMsg
+
+	span := constructExceptionServerSpan(attributes, ptrace.StatusCodeUnset)
+	filtered, _ := makeHTTP(span)
+	// Status is used to determine whether an error or not.
+	// This span illustrates incorrect instrumentation,
+	// marking a success status with an error http status code, and status wins.
+	// We do not expect to see such spans in practice.
+	res := pcommon.NewResource()
+	isError, isFault, isThrottle, filtered, cause := makeCause(span, filtered, res)
+
+	assert.True(t, isError)
+	assert.False(t, isFault)
+	assert.False(t, isThrottle)
+	assert.NotNil(t, filtered)
+	assert.Nil(t, cause)
+}
+
 func TestCauseWithClientErrorMessage(t *testing.T) {
 	errorMsg := "this is a test"
 	attributes := make(map[string]any)
@@ -359,12 +457,54 @@ func TestCauseWithClientErrorMessage(t *testing.T) {
 	assert.NotNil(t, cause)
 }
 
+func TestCauseWithClientErrorMessageStable(t *testing.T) {
+	errorMsg := "this is a test"
+	attributes := make(map[string]any)
+	attributes[conventions.AttributeHTTPMethod] = "POST"
+	attributes[conventions.AttributeHTTPURL] = "https://api.example.com/widgets"
+	attributes[AwsIndividualHTTPErrorCodeAttr] = 499
+	attributes["http.status_text"] = errorMsg
+
+	span := constructExceptionServerSpan(attributes, ptrace.StatusCodeError)
+	filtered, _ := makeHTTP(span)
+
+	res := pcommon.NewResource()
+	isError, isFault, isThrottle, filtered, cause := makeCause(span, filtered, res)
+
+	assert.True(t, isError)
+	assert.False(t, isFault)
+	assert.False(t, isThrottle)
+	assert.NotNil(t, filtered)
+	assert.NotNil(t, cause)
+}
+
 func TestCauseWithThrottled(t *testing.T) {
 	errorMsg := "this is a test"
 	attributes := make(map[string]any)
 	attributes[conventions.AttributeHTTPMethod] = "POST"
 	attributes[conventions.AttributeHTTPURL] = "https://api.example.com/widgets"
 	attributes[conventions.AttributeHTTPStatusCode] = 429
+	attributes["http.status_text"] = errorMsg
+
+	span := constructExceptionServerSpan(attributes, ptrace.StatusCodeError)
+	filtered, _ := makeHTTP(span)
+
+	res := pcommon.NewResource()
+	isError, isFault, isThrottle, filtered, cause := makeCause(span, filtered, res)
+
+	assert.True(t, isError)
+	assert.False(t, isFault)
+	assert.True(t, isThrottle)
+	assert.NotNil(t, filtered)
+	assert.NotNil(t, cause)
+}
+
+func TestCauseWithThrottledStable(t *testing.T) {
+	errorMsg := "this is a test"
+	attributes := make(map[string]any)
+	attributes[conventions.AttributeHTTPMethod] = "POST"
+	attributes[conventions.AttributeHTTPURL] = "https://api.example.com/widgets"
+	attributes[AwsIndividualHTTPErrorCodeAttr] = 429
 	attributes["http.status_text"] = errorMsg
 
 	span := constructExceptionServerSpan(attributes, ptrace.StatusCodeError)
