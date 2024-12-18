@@ -12,7 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/collector/pdata/pcommon"
 	"go.opentelemetry.io/collector/pdata/ptrace"
-	conventionsV127 "go.opentelemetry.io/collector/semconv/v1.27.0"
+	conventionsv127 "go.opentelemetry.io/collector/semconv/v1.27.0"
 	conventions "go.opentelemetry.io/collector/semconv/v1.6.1"
 )
 
@@ -69,7 +69,7 @@ func TestMakeCauseAwsSdkSpan(t *testing.T) {
 
 	event1 := span.Events().AppendEmpty()
 	event1.SetName(AwsIndividualHTTPEventName)
-	event1.Attributes().PutStr(conventionsV127.AttributeHTTPResponseStatusCode, "503")
+	event1.Attributes().PutStr(conventionsv127.AttributeHTTPResponseStatusCode, "503")
 	event1.Attributes().PutStr(AwsIndividualHTTPErrorMsgAttr, "service is temporarily unavailable")
 	timestamp := pcommon.NewTimestampFromTime(time.UnixMicro(1696954761000001))
 	event1.SetTimestamp(timestamp)
@@ -200,9 +200,9 @@ func TestCauseWithStatusMessage(t *testing.T) {
 func TestCauseWithStatusMessageStable(t *testing.T) {
 	errorMsg := "this is a test"
 	attributes := make(map[string]any)
-	attributes[conventionsV127.AttributeHTTPRequestMethod] = "POST"
-	attributes[conventionsV127.AttributeURLFull] = "https://api.example.com/widgets"
-	attributes[conventionsV127.AttributeHTTPResponseStatusCode] = 500
+	attributes[conventionsv127.AttributeHTTPRequestMethod] = "POST"
+	attributes[conventionsv127.AttributeURLFull] = "https://api.example.com/widgets"
+	attributes[conventionsv127.AttributeHTTPResponseStatusCode] = 500
 	span := constructExceptionServerSpan(attributes, ptrace.StatusCodeError)
 	span.Status().SetMessage(errorMsg)
 	filtered, _ := makeHTTP(span)
@@ -252,7 +252,7 @@ func TestCauseWithHttpStatusMessageStable(t *testing.T) {
 	attributes := make(map[string]any)
 	attributes[conventions.AttributeHTTPMethod] = "POST"
 	attributes[conventions.AttributeHTTPURL] = "https://api.example.com/widgets"
-	attributes[conventionsV127.AttributeHTTPResponseStatusCode] = 500
+	attributes[conventionsv127.AttributeHTTPResponseStatusCode] = 500
 	attributes["http.status_text"] = errorMsg
 	span := constructExceptionServerSpan(attributes, ptrace.StatusCodeError)
 	filtered, _ := makeHTTP(span)
@@ -299,9 +299,9 @@ func TestCauseWithZeroStatusMessageAndFaultHttpCode(t *testing.T) {
 func TestCauseWithZeroStatusMessageAndFaultHttpCodeStable(t *testing.T) {
 	errorMsg := "this is a test"
 	attributes := make(map[string]any)
-	attributes[conventionsV127.AttributeHTTPRequestMethod] = "POST"
-	attributes[conventionsV127.AttributeURLFull] = "https://api.example.com/widgets"
-	attributes[conventionsV127.AttributeHTTPResponseStatusCode] = 500
+	attributes[conventionsv127.AttributeHTTPRequestMethod] = "POST"
+	attributes[conventionsv127.AttributeURLFull] = "https://api.example.com/widgets"
+	attributes[conventionsv127.AttributeHTTPResponseStatusCode] = 500
 	attributes["http.status_text"] = errorMsg
 
 	span := constructExceptionServerSpan(attributes, ptrace.StatusCodeUnset)
@@ -416,9 +416,9 @@ func TestCauseWithZeroStatusMessageAndFaultErrorCode(t *testing.T) {
 func TestCauseWithZeroStatusMessageAndFaultErrorCodeStable(t *testing.T) {
 	errorMsg := "this is a test"
 	attributes := make(map[string]any)
-	attributes[conventionsV127.AttributeHTTPRequestMethod] = "POST"
-	attributes[conventionsV127.AttributeURLFull] = "https://api.example.com/widgets"
-	attributes[conventionsV127.AttributeHTTPResponseStatusCode] = 400
+	attributes[conventionsv127.AttributeHTTPRequestMethod] = "POST"
+	attributes[conventionsv127.AttributeURLFull] = "https://api.example.com/widgets"
+	attributes[conventionsv127.AttributeHTTPResponseStatusCode] = 400
 	attributes["http.status_text"] = errorMsg
 
 	span := constructExceptionServerSpan(attributes, ptrace.StatusCodeUnset)
@@ -461,9 +461,9 @@ func TestCauseWithClientErrorMessage(t *testing.T) {
 func TestCauseWithClientErrorMessageStable(t *testing.T) {
 	errorMsg := "this is a test"
 	attributes := make(map[string]any)
-	attributes[conventionsV127.AttributeHTTPRequestMethod] = "POST"
-	attributes[conventionsV127.AttributeURLFull] = "https://api.example.com/widgets"
-	attributes[conventionsV127.AttributeHTTPResponseStatusCode] = 499
+	attributes[conventionsv127.AttributeHTTPRequestMethod] = "POST"
+	attributes[conventionsv127.AttributeURLFull] = "https://api.example.com/widgets"
+	attributes[conventionsv127.AttributeHTTPResponseStatusCode] = 499
 	attributes["http.status_text"] = errorMsg
 
 	span := constructExceptionServerSpan(attributes, ptrace.StatusCodeError)
@@ -503,9 +503,9 @@ func TestCauseWithThrottled(t *testing.T) {
 func TestCauseWithThrottledStable(t *testing.T) {
 	errorMsg := "this is a test"
 	attributes := make(map[string]any)
-	attributes[conventionsV127.AttributeHTTPRequestMethod] = "POST"
-	attributes[conventionsV127.AttributeURLFull] = "https://api.example.com/widgets"
-	attributes[conventionsV127.AttributeHTTPResponseStatusCode] = 429
+	attributes[conventionsv127.AttributeHTTPRequestMethod] = "POST"
+	attributes[conventionsv127.AttributeURLFull] = "https://api.example.com/widgets"
+	attributes[conventionsv127.AttributeHTTPResponseStatusCode] = 429
 	attributes["http.status_text"] = errorMsg
 
 	span := constructExceptionServerSpan(attributes, ptrace.StatusCodeError)
