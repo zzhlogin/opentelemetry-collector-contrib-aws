@@ -2181,8 +2181,9 @@ github.com/stretchr/testify v1.8.1/go.mod h1:w2LPCIKwWwSfY2zedu0+kehJoqGctiVI29o
 github.com/stretchr/testify v1.8.2/go.mod h1:w2LPCIKwWwSfY2zedu0+kehJoqGctiVI29o6fzry7u4=
 github.com/stretchr/testify v1.8.3/go.mod h1:sz/lmYIOXD/1dqDmKjjqLyZ2RngseejIcXlSw2iwfAo=
 github.com/stretchr/testify v1.8.4/go.mod h1:sz/lmYIOXD/1dqDmKjjqLyZ2RngseejIcXlSw2iwfAo=
-github.com/stretchr/testify v1.9.0 h1:HtqpIVDClZ4nwg75+f6Lvsy/wHu+3BoSGCbBAcpTsTg=
 github.com/stretchr/testify v1.9.0/go.mod h1:r2ic/lqez/lEtzL7wO/rwa5dbSLXVDPFyf8C91i36aY=
+github.com/stretchr/testify v1.10.0 h1:Xv5erBjTwe/5IxqUQTdXv5kgmIvbHo3QQyRwhJsOfJA=
+github.com/stretchr/testify v1.10.0/go.mod h1:r2ic/lqez/lEtzL7wO/rwa5dbSLXVDPFyf8C91i36aY=
 github.com/subosito/gotenv v1.2.0/go.mod h1:N0PQaV/YGNqwC0u51sEeR/aUtSLEXKX9iv69rRypqCw=
 github.com/subosito/gotenv v1.6.0 h1:9NlTDc1FTs4qu0DDq7AEtTPNw6SVm7uBMsUCUjABIf8=
 github.com/subosito/gotenv v1.6.0/go.mod h1:Dk4QP5c2W3ibzajGcXpNraDfq2IrhjMIvMSWPKKo0FU=
@@ -2390,8 +2391,8 @@ go.opentelemetry.io/collector/receiver v0.103.0 h1:V3JBKkX+7e/NYpDDZVyeu2VQB1/lL
 go.opentelemetry.io/collector/receiver v0.103.0/go.mod h1:Yybv4ynKFdMOYViWWPMmjkugR89FSQN0P37wP6mX6qM=
 go.opentelemetry.io/collector/receiver/otlpreceiver v0.103.0 h1:TycVVl4AWioV6kWeFcCIk2QuKfXOzn88yw989opsMdE=
 go.opentelemetry.io/collector/receiver/otlpreceiver v0.103.0/go.mod h1:jAbzL5lwOGG93YbcPZ6aFZIZq+tjYQ+BS3vKKT2nRgw=
-go.opentelemetry.io/collector/semconv v0.103.0 h1:5tlVoZlo9USHAU2Bz4YrEste0Vm5AMufXkYJhAVve1Q=
-go.opentelemetry.io/collector/semconv v0.103.0/go.mod h1:yMVUCNoQPZVq/IPfrHrnntZTWsLf5YGZ7qwKulIl5hw=
+go.opentelemetry.io/collector/semconv v0.116.0 h1:63xCZomsKJAWmKGWD3lnORiE3WKW6AO4LjnzcHzGx3Y=
+go.opentelemetry.io/collector/semconv v0.116.0/go.mod h1:N6XE8Q0JKgBN2fAhkUQtqK9LT7rEGR6+Wu/Rtbal1iI=
 go.opentelemetry.io/collector/service v0.103.0 h1:e4Eri4jo+YOuEK0+/JE9SUdT/NZaJ2jz/ROJlmLn96s=
 go.opentelemetry.io/collector/service v0.103.0/go.mod h1:p1mlniiC1MuPN5FANYJYgf5V5CGFP0hNqWfI8t7Aw8M=
 go.opentelemetry.io/contrib/config v0.7.0 h1:b1rK5tGTuhhPirJiMxOcyQfZs76j2VapY6ODn3b2Dbs=
