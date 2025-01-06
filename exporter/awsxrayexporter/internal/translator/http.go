@@ -10,10 +10,23 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"go.opentelemetry.io/collector/pdata/pcommon"
 	"go.opentelemetry.io/collector/pdata/ptrace"
-	conventionsv127 "go.opentelemetry.io/collector/semconv/v1.27.0"
 	conventions "go.opentelemetry.io/collector/semconv/v1.6.1"
 
 	awsxray "github.com/open-telemetry/opentelemetry-collector-contrib/internal/aws/xray"
+)
+
+const (
+	AttributeHTTPRequestMethod      = "http.request.method"
+	AttributeHTTPResponseStatusCode = "http.response.status_code"
+	AttributeServerAddress          = "server.address"
+	AttributeServerPort             = "server.port"
+	AttributeNetworkPeerAddress     = "network.peer.address"
+	AttributeClientAddress          = "client.address"
+	AttributeURLScheme              = "url.scheme"
+	AttributeURLFull                = "url.full"
+	AttributeURLPath                = "url.path"
+	AttributeURLQuery               = "url.query"
+	AttributeUserAgentOriginal      = "user_agent.original"
 )
 
 func makeHTTP(span ptrace.Span) (map[string]pcommon.Value, *awsxray.HTTPData) {
@@ -36,30 +49,30 @@ func makeHTTP(span ptrace.Span) (map[string]pcommon.Value, *awsxray.HTTPData) {
 
 	span.Attributes().Range(func(key string, value pcommon.Value) bool {
 		switch key {
-		case conventions.AttributeHTTPMethod, conventionsv127.AttributeHTTPRequestMethod:
+		case conventions.AttributeHTTPMethod, AttributeHTTPRequestMethod:
 			info.Request.Method = awsxray.String(value.Str())
 			hasHTTP = true
 		case conventions.AttributeHTTPClientIP:
 			info.Request.ClientIP = awsxray.String(value.Str())
 			hasHTTP = true
-		case conventions.AttributeHTTPUserAgent, conventionsv127.AttributeUserAgentOriginal:
+		case conventions.AttributeHTTPUserAgent, AttributeUserAgentOriginal:
 			info.Request.UserAgent = awsxray.String(value.Str())
 			hasHTTP = true
-		case conventions.AttributeHTTPStatusCode, conventionsv127.AttributeHTTPResponseStatusCode:
+		case conventions.AttributeHTTPStatusCode, AttributeHTTPResponseStatusCode:
 			info.Response.Status = aws.Int64(value.Int())
 			hasHTTP = true
-		case conventions.AttributeHTTPURL, conventionsv127.AttributeURLFull:
+		case conventions.AttributeHTTPURL, AttributeURLFull:
 			urlParts[conventions.AttributeHTTPURL] = value.Str()
 			hasHTTP = true
 			hasHTTPRequestURLAttributes = true
-		case conventions.AttributeHTTPScheme, conventionsv127.AttributeURLScheme:
+		case conventions.AttributeHTTPScheme, AttributeURLScheme:
 			urlParts[conventions.AttributeHTTPScheme] = value.Str()
 			hasHTTP = true
 		case conventions.AttributeHTTPHost:
 			urlParts[key] = value.Str()
 			hasHTTP = true
 			hasHTTPRequestURLAttributes = true
-		case conventions.AttributeHTTPTarget, conventionsv127.AttributeURLQuery:
+		case conventions.AttributeHTTPTarget, AttributeURLQuery:
 			urlParts[conventions.AttributeHTTPTarget] = value.Str()
 			hasHTTP = true
 		case conventions.AttributeHTTPServerName:
@@ -94,7 +107,7 @@ func makeHTTP(span ptrace.Span) (map[string]pcommon.Value, *awsxray.HTTPData) {
 			urlParts[key] = value.Str()
 			hasHTTPRequestURLAttributes = true
 			hasNetPeerAddr = true
-		case conventionsv127.AttributeNetworkPeerAddress:
+		case AttributeNetworkPeerAddress:
 			// Prefer HTTP forwarded information (AttributeHTTPClientIP) when present.
 			if net.ParseIP(value.Str()) != nil {
 				if info.Request.ClientIP == nil {
@@ -103,17 +116,17 @@ func makeHTTP(span ptrace.Span) (map[string]pcommon.Value, *awsxray.HTTPData) {
 				hasHTTPRequestURLAttributes = true
 				hasNetPeerAddr = true
 			}
-		case conventionsv127.AttributeClientAddress:
+		case AttributeClientAddress:
 			if net.ParseIP(value.Str()) != nil {
 				info.Request.ClientIP = awsxray.String(value.Str())
 			}
-		case conventionsv127.AttributeURLPath:
+		case AttributeURLPath:
 			urlParts[key] = value.Str()
 			hasHTTP = true
-		case conventionsv127.AttributeServerAddress:
+		case AttributeServerAddress:
 			urlParts[key] = value.Str()
 			hasHTTPRequestURLAttributes = true
-		case conventionsv127.AttributeServerPort:
+		case AttributeServerPort:
 			urlParts[key] = value.Str()
 			if len(urlParts[key]) == 0 {
 				urlParts[key] = strconv.FormatInt(value.Int(), 10)
@@ -234,13 +247,13 @@ func constructServerURL(urlParts map[string]string) string {
 			if !ok {
 				host, ok = urlParts[conventions.AttributeHostName]
 				if !ok {
-					host = urlParts[conventionsv127.AttributeServerAddress]
+					host = urlParts[AttributeServerAddress]
 				}
 			}
 		}
 		port, ok = urlParts[conventions.AttributeNetHostPort]
 		if !ok {
-			port, ok = urlParts[conventionsv127.AttributeServerPort]
+			port, ok = urlParts[AttributeServerPort]
 			if !ok {
 				port = ""
 			}
@@ -254,7 +267,7 @@ func constructServerURL(urlParts map[string]string) string {
 	if ok {
 		url += target
 	} else {
-		path, ok := urlParts[conventionsv127.AttributeURLPath]
+		path, ok := urlParts[AttributeURLPath]
 		if ok {
 			url += path
 		} else {

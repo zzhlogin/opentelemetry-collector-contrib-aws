@@ -9,7 +9,6 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/stretchr/testify/assert"
 	"go.opentelemetry.io/collector/pdata/pcommon"
-	conventionsv127 "go.opentelemetry.io/collector/semconv/v1.27.0"
 	conventions "go.opentelemetry.io/collector/semconv/v1.6.1"
 
 	awsxray "github.com/open-telemetry/opentelemetry-collector-contrib/internal/aws/xray"
@@ -364,10 +363,10 @@ func TestJavaAutoInstrumentation(t *testing.T) {
 func TestJavaAutoInstrumentationStable(t *testing.T) {
 	attributes := make(map[string]pcommon.Value)
 	resource := pcommon.NewResource()
-	resource.Attributes().PutStr(conventionsv127.AttributeTelemetrySDKName, "opentelemetry")
-	resource.Attributes().PutStr(conventionsv127.AttributeTelemetrySDKLanguage, "java")
-	resource.Attributes().PutStr(conventionsv127.AttributeTelemetrySDKVersion, "1.2.3")
-	resource.Attributes().PutStr(conventionsv127.AttributeTelemetryDistroVersion, "3.4.5")
+	resource.Attributes().PutStr(conventions.AttributeTelemetrySDKName, "opentelemetry")
+	resource.Attributes().PutStr(conventions.AttributeTelemetrySDKLanguage, "java")
+	resource.Attributes().PutStr(conventions.AttributeTelemetrySDKVersion, "1.2.3")
+	resource.Attributes().PutStr(AttributeTelemetryDistroVersion, "3.4.5")
 
 	filtered, awsData := makeAws(attributes, resource, nil)
 
